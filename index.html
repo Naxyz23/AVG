@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AVG · Average Daily Balance</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
   --bg:#0274bf;--panel:#025fa0;--panel2:#0369b0;--line:#1a85d0;
   --ink:#eef4f1;--muted:#b8d8f0;--gold:#ffe066;--gold2:#e0c040;
   --pos:#6fd2a6;--neg:#e8896b;
+  --c-date:#60c8ff;--c-out:#ff8f7a;--c-in:#ffe066;--c-bal:#6fd2a6;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Thai",sans-serif;
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",sans-serif;
   min-height:100vh;padding:20px 16px 60px;-webkit-font-smoothing:antialiased}
-.wrap{max-width:700px;margin:0 auto}
-h1{font-family:"Noto Serif Thai",serif;font-size:22px;margin:14px 0 4px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-family:"Noto Serif",serif;font-size:22px;margin:14px 0 4px}
 .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
 .logo{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:3px;
   color:var(--gold);border:1px solid var(--gold2);padding:3px 8px;border-radius:6px}
@@ -31,31 +33,58 @@ h1{font-family:"Noto Serif Thai",serif;font-size:22px;margin:14px 0 4px}
   text-align:center;cursor:pointer;transition:.15s;color:var(--muted);
   display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
 .drop-zone:hover{border-color:var(--gold2);color:var(--ink);background:rgba(255,224,102,.06)}
-.drop-zone .icon{font-size:32px;display:block;margin-bottom:8px}
+.drop-zone .icon{font-size:32px;margin-bottom:8px}
 .drop-zone b{color:var(--gold)}
 .drop-zone small{display:block;margin-top:6px;font-size:12px}
 input[type=file]{display:none}
 #imgPreview{width:100%;max-height:200px;object-fit:contain;border-radius:10px;
   border:1px solid var(--line);margin-top:10px;display:none}
 .status{font-size:13px;min-height:18px;margin-top:10px}
-.status.ok{color:var(--pos)}
-.status.err{color:var(--neg)}
+.status.ok{color:var(--pos)}.status.err{color:var(--neg)}
 .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
   border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
 
+.picker-wrap{margin-top:12px;display:none}
+.picker-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:12px}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:12px;height:12px;border-radius:50%}
+.picker-tbl-wrap{overflow-x:auto;max-height:220px;overflow-y:auto;border-radius:10px;border:1px solid var(--line)}
+.picker-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.picker-tbl th{padding:8px 10px;text-align:left;white-space:nowrap;cursor:pointer;
+  background:var(--panel2);border-bottom:2px solid var(--line);transition:.15s;user-select:none;position:sticky;top:0;z-index:1}
+.picker-tbl th:hover{filter:brightness(1.2)}
+.picker-tbl th .col-label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:2px;min-height:14px}
+.picker-tbl th .col-name{font-weight:500;color:var(--muted)}
+.picker-tbl td{padding:5px 10px;border-bottom:1px solid rgba(26,133,208,.25);white-space:nowrap}
+.picker-tbl tr:last-child td{border-bottom:none}
+th.role-date-h{background:rgba(96,200,255,.25)!important;color:var(--c-date)!important}
+th.role-out-h{background:rgba(255,143,122,.25)!important;color:var(--c-out)!important}
+th.role-in-h{background:rgba(255,224,102,.25)!important;color:var(--c-in)!important}
+th.role-bal-h{background:rgba(111,210,166,.25)!important;color:var(--c-bal)!important}
+td.role-date-h{color:var(--c-date);font-weight:600}
+td.role-out-h{color:var(--c-out);font-weight:600}
+td.role-in-h{color:var(--c-in);font-weight:600}
+td.role-bal-h{color:var(--c-bal);font-weight:600}
 
+.ctx-menu{position:fixed;background:var(--panel2);border:1px solid var(--line);
+  border-radius:10px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none}
+.ctx-item{padding:8px 14px;border-radius:7px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;gap:8px;transition:.1s}
+.ctx-item:hover{background:rgba(255,255,255,.1)}
+.ctx-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ctx-clear{color:var(--muted);border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
 
 .tbl-wrap{overflow-x:auto;margin-bottom:12px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{color:var(--muted);font-weight:500;font-size:11.5px;padding:6px 4px;
+table.data-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.data-tbl th{color:var(--muted);font-weight:500;font-size:11.5px;padding:6px 4px;
   border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-th.l,td.l{text-align:left}
-td{padding:2px 2px;border-bottom:1px solid rgba(26,133,208,.35)}
-td input{width:100%;background:transparent;border:1px solid transparent;color:var(--ink);
-  border-radius:6px;padding:6px 5px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-align:right}
-td input.l{text-align:left}
-td input:focus{outline:none;border-color:var(--gold2);background:rgba(0,0,0,.2)}
+table.data-tbl th.l,table.data-tbl td.l{text-align:left}
+table.data-tbl td{padding:2px 2px;border-bottom:1px solid rgba(26,133,208,.35)}
+table.data-tbl td input{width:100%;background:transparent;border:1px solid transparent;color:var(--ink);
+  border-radius:6px;padding:5px 5px;font-family:"IBM Plex Mono",monospace;font-size:12px;text-align:right}
+table.data-tbl td input.l{text-align:left}
+table.data-tbl td input:focus{outline:none;border-color:var(--gold2);background:rgba(0,0,0,.2)}
 .del{cursor:pointer;color:var(--muted);padding:2px 7px;border-radius:5px;font-size:14px}
 .del:hover{color:var(--neg)}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -66,6 +95,8 @@ td input:focus{outline:none;border-color:var(--gold2);background:rgba(0,0,0,.2)}
 .btn.primary{background:var(--gold);color:#1a3a00;border-color:var(--gold);
   font-weight:600;font-size:15px;padding:13px;width:100%}
 .btn.primary:hover{filter:brightness(1.07)}
+.btn.primary:disabled{opacity:.5;cursor:not-allowed}
+
 .result{display:none}.result.show{display:block}
 .month-block{margin-bottom:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .month-header{display:flex;justify-content:space-between;align-items:center;
@@ -93,7 +124,7 @@ td input:focus{outline:none;border-color:var(--gold2);background:rgba(0,0,0,.2)}
 .summary-table th.l{text-align:left}
 .summary-table td{padding:8px 6px;border-bottom:1px solid rgba(26,133,208,.3);text-align:right}
 .summary-table td.l{text-align:left}
-.summary-table .mono{font-family:"IBM Plex Mono",monospace;font-size:13px}
+.summary-table .mono{font-family:"IBM Plex Mono",monospace}
 .summary-table .gold{color:var(--gold);font-weight:600}
 footer{text-align:center;font-size:11.5px;color:var(--muted);margin-top:20px;opacity:.8}
 </style>
@@ -102,87 +133,86 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);margin-top:20px;opa
 <div class="wrap">
   <div class="logo">AVG</div>
   <h1>Average Daily Balance</h1>
-  <p class="sub">Average Daily Balance — รองรับหลายเดือน คำนวณแยกรายเดือนอัตโนมัติ</p>
+  <p class="sub">Supports multi-month data — calculated separately per month automatically</p>
 
   <div class="card">
     <div class="tabs">
-      <button class="tab on" id="tabPhoto" onclick="switchTab('photo')">
-        📷 รูปภาพ<small>ให้ AI อ่านให้</small>
-      </button>
-      <button class="tab" id="tabCsv" onclick="switchTab('csv')">
-        📄 CSV<small>ไฟล์ตาราง</small>
-      </button>
-      <button class="tab" id="tabPaste" onclick="switchTab('paste')">
-        📋 Paste<small>Copy จาก Excel</small>
-      </button>
+      <button class="tab on" id="tabPhoto" onclick="switchTab('photo')">📷 Photo/PDF<small>AI reads for you</small></button>
+      <button class="tab" id="tabCsv" onclick="switchTab('csv')">📄 CSV File<small>Spreadsheet export</small></button>
+      <button class="tab" id="tabPaste" onclick="switchTab('paste')">📋 Paste<small>Copy from Excel</small></button>
     </div>
 
-    <!-- Photo -->
     <div id="panePhoto">
       <label class="drop-zone" for="imgFile">
         <span class="icon">🧾</span>
-        <b>แตะเพื่อถ่ายรูป</b> หรือเลือกรูป statement<br>
-        <small>JPG / PNG — ให้เห็นคอลัมน์ ออก / เข้า / ยอดเหลือท้ายมือ ชัดๆ</small>
+        <b>Tap to take a photo</b> or select a statement image / PDF<br>
+        <small>JPG / PNG / PDF — make sure Withdrawal / Deposit / Balance columns are visible</small>
       </label>
-      <input type="file" id="imgFile" accept="image/*" capture="environment">
+      <input type="file" id="imgFile" accept="image/*,application/pdf" capture="environment">
       <img id="imgPreview" alt="preview">
     </div>
 
-    <!-- CSV -->
     <div id="paneCsv" style="display:none">
       <label class="drop-zone" for="csvFile">
         <span class="icon">📄</span>
-        <b>แตะเพื่อเลือกไฟล์ CSV</b>
-        <small>รองรับทุก format — ระบบจะ detect คอลัมน์ให้อัตโนมัติ</small>
+        <b>Tap to select a CSV file</b>
+        <small>Any format — then click column headers to assign roles</small>
       </label>
       <input type="file" id="csvFile" accept=".csv,text/csv">
+      <div class="picker-wrap" id="pickerWrap">
+        <div class="picker-legend">
+          <span style="font-size:12px;color:var(--muted);margin-right:4px">Click a column header to assign:</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c-date)"></span>Date</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c-out)"></span>Withdrawal</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c-in)"></span>Deposit</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c-bal)"></span>Balance</span>
+        </div>
+        <div class="picker-tbl-wrap"><table class="picker-tbl" id="pickerTbl"></table></div>
+        <button class="btn primary" style="margin-top:10px" id="pickerLoadBtn" onclick="applyColPicker()" disabled>
+          Select Date &amp; Balance columns first
+        </button>
+      </div>
     </div>
 
-    <!-- Paste -->
     <div id="panePaste" style="display:none">
       <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">
-        1. เปิด Excel → เลือก cell วันที่แรก ถึง ยอดเหลือสุดท้าย<br>
-        2. กด <b style="color:var(--gold)">Ctrl+C</b> แล้ว <b style="color:var(--gold)">Ctrl+V</b> ในช่องด้านล่าง
+        1. Open Excel → select from the first date cell to the last balance cell<br>
+        2. Press <b style="color:var(--gold)">Ctrl+C</b> then <b style="color:var(--gold)">Ctrl+V</b> in the box below
       </div>
-      <textarea id="pasteArea"
-        placeholder="วางข้อมูลที่นี่..."
+      <textarea id="pasteArea" placeholder="Paste data here..."
         style="width:100%;height:160px;background:rgba(0,0,0,.2);border:1.5px dashed var(--line);
           border-radius:12px;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:12px;
-          padding:12px;resize:vertical;outline:none;line-height:1.6"
-        ></textarea>
-      <button class="btn primary" style="margin-top:10px" onclick="parsePaste()">
-        ✅ โหลดข้อมูลจาก Paste
-      </button>
+          padding:12px;resize:vertical;outline:none;line-height:1.6"></textarea>
+      <button class="btn primary" style="margin-top:10px" onclick="parsePaste()">✅ Load Pasted Data</button>
     </div>
+
+    <div class="status" id="statusMsg"></div>
   </div>
 
-  <!-- Table -->
   <div class="card" id="tableCard" style="display:none">
-    <div class="card-title">📋 ตรวจสอบ / แก้ไขข้อมูล</div>
+    <div class="card-title">📋 Review / Edit Data</div>
     <div class="tbl-wrap">
-      <table>
+      <table class="data-tbl">
         <thead><tr>
-          <th class="l">วันที่</th><th>ออก</th><th>เข้า</th><th>ยอดเหลือท้ายมือ</th><th></th>
+          <th class="l">Date</th><th class="l">Description</th><th class="l">Value Date</th>
+          <th>Withdrawal</th><th>Deposit</th><th>Closing Balance</th><th></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
     <div class="btn-row">
-      <button class="btn ghost" onclick="addRow()">+ เพิ่มแถว</button>
-      <button class="btn ghost" onclick="clearTable()">🗑 ล้างตาราง</button>
+      <button class="btn ghost" onclick="addRow()">+ Add Row</button>
+      <button class="btn ghost" onclick="clearTable()">🗑 Clear</button>
     </div>
-    <button class="btn primary" onclick="compute()">คำนวณ Average Daily Balance</button>
+    <button class="btn primary" onclick="compute()">Calculate Average Daily Balance</button>
   </div>
 
-  <!-- Result -->
   <div class="result" id="resultCard">
     <div class="card" id="summaryCard" style="display:none">
-      <div class="card-title">📊 สรุปรายเดือน</div>
+      <div class="card-title">📊 Monthly Summary</div>
       <div class="tbl-wrap">
         <table class="summary-table">
-          <thead><tr>
-            <th class="l">เดือน</th><th>จำนวนวัน</th><th>Average Daily Balance</th>
-          </tr></thead>
+          <thead><tr><th class="l">Month</th><th>Days</th><th>Average Daily Balance</th></tr></thead>
           <tbody id="summaryBody"></tbody>
         </table>
       </div>
@@ -193,189 +223,295 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);margin-top:20px;opa
   <footer>Create by DNAy</footer>
 </div>
 
-<script>
-let rows = [];
-let csvRawData = []; // all parsed CSV rows as string arrays
-let csvHeaders = []; // header row labels for dropdowns
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="assignCol('date')"><span class="ctx-dot" style="background:var(--c-date)"></span>Date</div>
+  <div class="ctx-item" onclick="assignCol('out')"><span class="ctx-dot" style="background:var(--c-out)"></span>Withdrawal</div>
+  <div class="ctx-item" onclick="assignCol('in')"><span class="ctx-dot" style="background:var(--c-in)"></span>Deposit</div>
+  <div class="ctx-item" onclick="assignCol('bal')"><span class="ctx-dot" style="background:var(--c-bal)"></span>Balance</div>
+  <div class="ctx-item ctx-clear" onclick="assignCol(null)">✕ Clear</div>
+</div>
 
-const MONTHS=['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-const MONTHS_SHORT=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+<script>
+let rows=[];
+let csvRawData=[], csvHeaders=[];
+let colMap={date:-1,out:-1,in:-1,bal:-1};
+let ctxTargetCol=-1;
+
+const MONTHS=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const ROLE_COLOR={date:'var(--c-date)',out:'var(--c-out)',in:'var(--c-in)',bal:'var(--c-bal)'};
+const ROLE_LABEL={date:'DATE',out:'WITHDRAWAL',in:'DEPOSIT',bal:'BALANCE'};
+const ROLE_CLASS={date:'role-date-h',out:'role-out-h',in:'role-in-h',bal:'role-bal-h'};
 
 function fmt(n){return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function parseNum(s){
-  if(s==null||s==='') return 0;
+  if(s==null||s==='')return 0;
   const n=parseFloat(String(s).replace(/[,\s]/g,'').replace(/[^\d.\-]/g,''));
   return isNaN(n)?0:n;
 }
 const MON_MAP={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
 function parseDate(s){
-  if(!s) return null; s=String(s).trim(); let m;
+  if(!s)return null;s=String(s).trim();let m;
   m=s.match(/^(\d{1,2})[\-\/\s]+([A-Za-z]{3,9})[\-\/\s]+(\d{2,4})$/);
   if(m){const mo=MON_MAP[m[2].slice(0,3).toLowerCase()];if(mo)return{d:+m[1],mo,y:+m[3]<100?2000+ +m[3]:+m[3]};}
-  m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
-  if(m)return{d:+m[3],mo:+m[2],y:+m[1]};
-  m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
-  if(m){const y=+m[3]<100?2000+ +m[3]:+m[3];return{d:+m[1],mo:+m[2],y};}
+  m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);if(m)return{d:+m[3],mo:+m[2],y:+m[1]};
+  m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);if(m){const y=+m[3]<100?2000+ +m[3]:+m[3];return{d:+m[1],mo:+m[2],y};}
   return null;
 }
-function setStatus(msg,cls=''){
-  const el=document.getElementById('statusMsg');
-  el.className='status'+(cls?' '+cls:'');el.innerHTML=msg;
-}
+function setStatus(msg,cls){const el=document.getElementById('statusMsg');el.className='status'+(cls?' '+cls:'');el.innerHTML=msg;}
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function switchTab(t){
-  document.getElementById('tabPhoto').classList.toggle('on',t==='photo');
-  document.getElementById('tabCsv').classList.toggle('on',t==='csv');
-  document.getElementById('tabPaste').classList.toggle('on',t==='paste');
-  document.getElementById('panePhoto').style.display=t==='photo'?'block':'none';
-  document.getElementById('paneCsv').style.display=t==='csv'?'block':'none';
-  document.getElementById('panePaste').style.display=t==='paste'?'block':'none';
+  ['photo','csv','paste'].forEach(x=>{
+    const cap=x.charAt(0).toUpperCase()+x.slice(1);
+    document.getElementById('tab'+cap).classList.toggle('on',t===x);
+    document.getElementById('pane'+cap).style.display=t===x?'block':'none';
+  });
 }
 
-// ── Paste (from Excel Ctrl+C) ────────────────────────────────────
-function parsePaste(){
-  const text = document.getElementById('pasteArea').value.trim();
-  if(!text){ setStatus('❌ ยังไม่มีข้อมูล — วางข้อมูลในช่องก่อน','err'); return; }
-  try{
-    // Excel copies as tab-separated
-    const lines = text.split(/\r?\n/).filter(l=>l.trim()!=='');
-    const allParsed = lines.map(l=>l.split('\t').map(c=>c.trim()));
-
-    // Skip title rows, find first row with a date
-    let dataStart=0;
-    for(let i=0;i<allParsed.length;i++){
-      if(allParsed[i].some(v=>parseDate(v))){ dataStart=i; break; }
-    }
-
-    const dataRows = allParsed.slice(dataStart).filter(r=>r.some(v=>parseDate(v)));
-    if(!dataRows.length) throw new Error('ไม่พบแถวที่มีวันที่ — ตรวจว่าเลือก copy ถูกช่อง');
-
-    // Use same auto-detect logic as CSV
-    const nCols = Math.max(...dataRows.map(r=>r.length));
-    const dateCnt  = Array(nCols).fill(0);
-    const largeCnt = Array(nCols).fill(0);
-    dataRows.forEach(r=>r.forEach((v,c)=>{
-      if(c>=nCols) return;
-      if(parseDate(v)) dateCnt[c]++;
-      if(parseNum(v)>10000) largeCnt[c]++;
-    }));
-
-    let di = dateCnt.indexOf(Math.max(...dateCnt));
-    const numCols = largeCnt.map((cnt,i)=>({i,cnt})).filter(x=>x.i!==di&&x.cnt>0).sort((a,b)=>a.i-b.i);
-    const sortedRight = [...numCols].sort((a,b)=>b.i-a.i);
-    let bi = sortedRight[0]?.i ?? -1;
-    const remaining = numCols.filter(x=>x.i!==bi);
-    let oi=-1, ii=-1;
-    if(remaining.length>=2){
-      const withZero = remaining.map(x=>({...x,zeros:dataRows.filter(r=>parseNum(r[x.i])===0).length})).sort((a,b)=>b.zeros-a.zeros);
-      oi=withZero[0].i; ii=withZero[1].i;
-    } else if(remaining.length===1){ ii=remaining[0].i; }
-
-    if(bi<0) throw new Error('ตรวจไม่เจอคอลัมน์ยอดเหลือ — ลองเลือก copy ให้ครบถึงคอลัมน์สุดท้าย');
-
-    rows = dataRows.map(r=>{
-      const dateVal = r[di]||'';
-      if(!parseDate(dateVal)) return null;
-      return{ date:dateVal, out:oi>=0?parseNum(r[oi]):0, in:ii>=0?parseNum(r[ii]):0, bal:parseNum(r[bi]) };
-    }).filter(Boolean);
-
-    if(!rows.length) throw new Error('ไม่พบแถวข้อมูล');
-    renderRows();
-    setStatus('✅ โหลดข้อมูล '+rows.length+' แถว — ตรวจแก้แล้วกดคำนวณ','ok');
-  } catch(err){ setStatus('❌ '+err.message,'err'); }
-}
-
-// ── CSV ──────────────────────────────────────────────────────────
 function splitLine(line,d){
   const p=[];let cur='',q=false;
   for(let i=0;i<line.length;i++){
     const c=line[i];
     if(c==='"'){if(q&&line[i+1]==='"'){cur+='"';i++;}else q=!q;}
-    else if(c===d&&!q){p.push(cur.trim());cur='';}
-    else cur+=c;
+    else if(c===d&&!q){p.push(cur.trim());cur='';}else cur+=c;
   }
   p.push(cur.trim());return p;
+}
+
+function detectColsByHeader(){
+  colMap={date:-1,out:-1,in:-1,bal:-1};
+  const h=csvHeaders.map(x=>x.toLowerCase());
+  const fi=(keys)=>h.findIndex(x=>keys.some(k=>x.includes(k)));
+  colMap.date=fi(['date','วันที่','ວັນ','ວັນທີ']);
+  colMap.out =fi(['out','ອອກ','ออก','withdrawal','debit']);
+  colMap.in  =fi(['in','ເຂົ','เข้า','deposit','credit','ເຂົ້າ']);
+  colMap.bal =fi(['balance','ຍອດ','ยอด','closing','ທ້າຍ','ຍອດເຫຼືອ']);
+}
+
+function fillMissingColsByPattern(dataRows){
+  const nCols=Math.max(...dataRows.map(r=>r.length),csvHeaders.length);
+  const dateCnt=Array(nCols).fill(0), largeCnt=Array(nCols).fill(0);
+  dataRows.forEach(r=>r.forEach((v,c)=>{
+    if(c<nCols){if(parseDate(v))dateCnt[c]++;if(parseNum(v)>0)largeCnt[c]++;}
+  }));
+  if(colMap.date<0) colMap.date=dateCnt.indexOf(Math.max(...dateCnt));
+  const numCols=largeCnt.map((cnt,i)=>({i,cnt})).filter(x=>x.i!==colMap.date&&x.cnt>0).sort((a,b)=>a.i-b.i);
+  const rightmost=[...numCols].sort((a,b)=>b.i-a.i);
+  if(colMap.bal<0&&rightmost[0]) colMap.bal=rightmost[0].i;
+  const rem=numCols.filter(x=>x.i!==colMap.bal);
+  if(colMap.out<0&&rem[0]) colMap.out=rem[0].i;
+  if(colMap.in<0&&rem[1])  colMap.in =rem[1].i;
 }
 
 document.getElementById('csvFile').addEventListener('change',function(e){
   const f=e.target.files[0];if(!f)return;
   const rd=new FileReader();
-  rd.onload=()=>{
-    try{parseCsvText(rd.result);}
-    catch(err){setStatus('❌ อ่าน CSV ไม่สำเร็จ: '+err.message,'err');}
-  };
+  rd.onload=()=>{try{loadCsvForPicker(rd.result);}catch(err){setStatus('❌ '+err.message,'err');}};
   rd.readAsText(f,'utf-8');
 });
 
-function parseCsvText(text){
+function loadCsvForPicker(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
-  if(!lines.length) throw new Error('ไฟล์ว่าง');
-
+  if(!lines.length)throw new Error('File is empty');
   const delim=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?';':(lines[0].includes('\t')?'\t':',');
   const allParsed=lines.map(l=>splitLine(l,delim));
-
-  // Find header row = row whose next row has a parseable date
   let hdrIdx=0;
   for(let i=0;i<Math.min(8,allParsed.length-1);i++){
     if(allParsed[i+1]&&allParsed[i+1].some(v=>parseDate(v))){hdrIdx=i;break;}
   }
-  const headers=allParsed[hdrIdx].map((h,i)=>h||'Col '+(i+1));
-  const dataRows=allParsed.slice(hdrIdx+1).filter(r=>r.some(v=>parseDate(v)));
-  if(!dataRows.length) throw new Error('ไม่พบแถวข้อมูลที่มีวันที่');
-
-  // Auto-detect columns
-  const h=headers.map(x=>x.toLowerCase());
-  const fi=(keys)=>h.findIndex(x=>keys.some(k=>x.includes(k)));
-  let di=fi(['date','วันที่','ວັນ','วัน']);
-  let oi=fi(['out','ออก','ถอน','withdraw','debit']);
-  let ii=fi(['in','เข้า','ເຂົ','deposit','credit']);
-  let bi=fi(['balance','ยอด','closing','ທ້າຍ','ยอดเหลือ','ยอดคง']);
-
-  // Fallback: infer from data patterns
-  const nCols=headers.length;
-  const dateCnt=Array(nCols).fill(0);
-  const largeCnt=Array(nCols).fill(0);
-  dataRows.forEach(r=>r.forEach((v,c)=>{
-    if(c>=nCols)return;
-    if(parseDate(v)) dateCnt[c]++;
-    if(parseNum(v)>10000) largeCnt[c]++;
-  }));
-
-  if(di<0) di=dateCnt.indexOf(Math.max(...dateCnt));
-
-  const numCols=largeCnt.map((cnt,i)=>({i,cnt})).filter(x=>x.i!==di&&x.cnt>0).sort((a,b)=>a.i-b.i);
-  const sortedRight=[...numCols].sort((a,b)=>b.i-a.i);
-  if(bi<0&&sortedRight[0]) bi=sortedRight[0].i;
-
-  const remaining=numCols.filter(x=>x.i!==bi);
-  if(remaining.length>=2){
-    const withZero=remaining.map(x=>({...x,zeros:dataRows.filter(r=>parseNum(r[x.i])===0).length})).sort((a,b)=>b.zeros-a.zeros);
-    if(oi<0) oi=withZero[0].i;
-    if(ii<0) ii=withZero[1].i;
-  } else if(remaining.length===1){
-    if(ii<0) ii=remaining[0].i;
-  }
-
-  // Build rows
-  rows=dataRows.map(r=>{
-    const dateVal=r[di]||'';
-    if(!parseDate(dateVal)) return null;
-    return{date:dateVal.trim(),out:oi>=0?parseNum(r[oi]):0,in:ii>=0?parseNum(r[ii]):0,bal:bi>=0?parseNum(r[bi]):0};
-  }).filter(Boolean);
-
-  if(!rows.length) throw new Error('ไม่พบแถวข้อมูลที่มีวันที่');
-  renderRows();
-  setStatus('✅ โหลดข้อมูล '+rows.length+' แถว — ตรวจแก้แล้วกดคำนวณ','ok');
+  csvHeaders=allParsed[hdrIdx].map((h,i)=>h||'Col '+(i+1));
+  csvRawData=allParsed.slice(hdrIdx+1).filter(r=>r.some(v=>parseDate(v)));
+  if(!csvRawData.length)throw new Error('No rows with valid dates found');
+  detectColsByHeader();
+  fillMissingColsByPattern(csvRawData);
+  buildPickerTable();
+  document.getElementById('pickerWrap').style.display='block';
+  setStatus('Review the colored columns, then click Load','ok');
 }
 
-// ── Table ────────────────────────────────────────────────────────
+function buildPickerTable(){
+  const tbl=document.getElementById('pickerTbl');
+  const preview=csvRawData.slice(0,8);
+  const nCols=csvHeaders.length;
+  const roleOfCol={};
+  Object.entries(colMap).forEach(([role,ci])=>{if(ci>=0)roleOfCol[ci]=role;});
+  let html='<thead><tr>';
+  for(let c=0;c<nCols;c++){
+    const role=roleOfCol[c];
+    const cls=role?ROLE_CLASS[role]:'';
+    const label=role?`<span class="col-label" style="color:${ROLE_COLOR[role]}">${ROLE_LABEL[role]}</span>`:`<span class="col-label"></span>`;
+    html+=`<th class="${cls}" onclick="openCtx(event,${c})" title="Click to assign">${label}<span class="col-name">${escHtml(csvHeaders[c])}</span></th>`;
+  }
+  html+='<th style="width:0"></th></tr></thead><tbody>';
+  preview.forEach(r=>{
+    html+='<tr>';
+    for(let c=0;c<nCols;c++){
+      const role=roleOfCol[c];
+      const cls=role?ROLE_CLASS[role]:'';
+      html+=`<td class="${cls}">${escHtml(r[c]||'')}</td>`;
+    }
+    html+='<td></td></tr>';
+  });
+  html+='</tbody>';
+  tbl.innerHTML=html;
+  updateLoadBtn();
+}
+
+function openCtx(e,colIdx){
+  e.stopPropagation();
+  ctxTargetCol=colIdx;
+  const menu=document.getElementById('ctxMenu');
+  menu.style.display='block';
+  menu.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  menu.style.top=Math.min(e.clientY,window.innerHeight-200)+'px';
+}
+document.addEventListener('click',()=>document.getElementById('ctxMenu').style.display='none');
+
+function assignCol(role){
+  document.getElementById('ctxMenu').style.display='none';
+  Object.keys(colMap).forEach(r=>{if(colMap[r]===ctxTargetCol)colMap[r]=-1;});
+  if(role!==null) colMap[role]=ctxTargetCol;
+  buildPickerTable();
+}
+
+function updateLoadBtn(){
+  const btn=document.getElementById('pickerLoadBtn');
+  const ready=colMap.date>=0&&colMap.bal>=0;
+  btn.disabled=!ready;
+  btn.textContent=ready?'✅ Load Data':'Select Date & Balance columns first';
+}
+
+function applyColPicker(){
+  const di=colMap.date, oi=colMap.out, ii=colMap.in, bi=colMap.bal;
+  if(di<0||bi<0){setStatus('❌ Date and Balance columns are required','err');return;}
+  rows=csvRawData.map(r=>{
+    const dateVal=r[di]||'';
+    if(!parseDate(dateVal))return null;
+    const assigned=new Set([di,oi,ii,bi].filter(x=>x>=0));
+    const descCol=csvHeaders.findIndex((_,c)=>!assigned.has(c)&&r[c]&&isNaN(parseFloat(String(r[c]).replace(/,/g,''))));
+    const vdateCol=csvHeaders.findIndex((_,c)=>!assigned.has(c)&&c!==descCol&&parseDate(r[c]));
+    return{
+      date:dateVal.trim(),
+      desc:descCol>=0?r[descCol]||'':'',
+      vdate:vdateCol>=0?r[vdateCol]||'':'',
+      out:oi>=0?parseNum(r[oi]):0,
+      in:ii>=0?parseNum(r[ii]):0,
+      bal:parseNum(r[bi])
+    };
+  }).filter(Boolean);
+  if(!rows.length){setStatus('❌ No valid data rows found','err');return;}
+  renderRows();
+  setStatus('✅ Loaded '+rows.length+' rows — review then click Calculate','ok');
+}
+
+function parsePaste(){
+  const text=document.getElementById('pasteArea').value.trim();
+  if(!text){setStatus('❌ No data — paste your data first','err');return;}
+  try{
+    const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
+    const allParsed=lines.map(l=>l.split('\t').map(c=>c.trim()));
+    let hdrIdx=-1,dataStart=0;
+    for(let i=0;i<allParsed.length;i++){
+      if(allParsed[i].some(v=>parseDate(v))){dataStart=i;if(i>0)hdrIdx=i-1;break;}
+    }
+    csvHeaders = hdrIdx>=0
+      ? allParsed[hdrIdx].map((h,i)=>h||'Col '+(i+1))
+      : Array.from({length:Math.max(...allParsed.map(r=>r.length))},(_,i)=>'Col '+(i+1));
+    csvRawData=allParsed.slice(dataStart).filter(r=>r.some(v=>parseDate(v)));
+    if(!csvRawData.length)throw new Error('No rows with valid dates found');
+    detectColsByHeader();
+    fillMissingColsByPattern(csvRawData);
+    applyColPicker();
+  }catch(err){setStatus('❌ '+err.message,'err');}
+}
+
+if(window.pdfjsLib){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+document.getElementById('imgFile').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const isPdf = f.type==='application/pdf' || /\.pdf$/i.test(f.name);
+  if(isPdf){ handlePdf(f); }
+  else { handleImage(f); }
+});
+
+function handleImage(f){
+  const prev=document.getElementById('imgPreview');
+  const rd=new FileReader();
+  rd.onload=async()=>{
+    prev.src=rd.result;prev.style.display='block';
+    const b64=rd.result.split(',')[1];const media=f.type||'image/jpeg';
+    setStatus('<span class="spin"></span>AI is reading the image…');
+    try{
+      const arr=await ocrImage(b64,media);
+      rows=arr;
+      renderRows();
+      setStatus('✅ Loaded '+rows.length+' rows — review then click Calculate','ok');
+    }catch(err){setStatus('❌ '+err.message,'err');}
+  };
+  rd.readAsDataURL(f);
+}
+
+async function handlePdf(f){
+  if(!window.pdfjsLib){setStatus('❌ PDF library not loaded — refresh and try again','err');return;}
+  const prev=document.getElementById('imgPreview');
+  prev.style.display='none';
+  setStatus('<span class="spin"></span>Reading PDF…');
+  try{
+    const buf=await f.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let allRows=[];
+    for(let p=1;p<=pdf.numPages;p++){
+      setStatus('<span class="spin"></span>Reading PDF page '+p+' of '+pdf.numPages+'…');
+      const page=await pdf.getPage(p);
+      const scale=2; // higher = sharper OCR
+      const viewport=page.getViewport({scale});
+      const canvas=document.createElement('canvas');
+      canvas.width=viewport.width;canvas.height=viewport.height;
+      const ctx=canvas.getContext('2d');
+      await page.render({canvasContext:ctx,viewport}).promise;
+      if(p===1){ prev.src=canvas.toDataURL('image/jpeg',0.85); prev.style.display='block'; }
+      const b64=canvas.toDataURL('image/jpeg',0.85).split(',')[1];
+      const pageRows=await ocrImage(b64,'image/jpeg');
+      allRows=allRows.concat(pageRows);
+    }
+    if(!allRows.length) throw new Error('No data rows found in PDF — try a clearer scan');
+    rows=allRows;
+    renderRows();
+    setStatus('✅ Loaded '+rows.length+' rows from '+pdf.numPages+' page(s) — review then click Calculate','ok');
+  }catch(err){setStatus('❌ '+err.message,'err');}
+}
+
+async function ocrImage(b64,media){
+  const prompt=`You are reading a bank statement table image.
+Columns order: 1.Transaction date 2.Description (skip) 3.Value date (skip) 4.WITHDRAWAL (debit, blank=0) 5.DEPOSIT (credit, blank=0) 6.RUNNING BALANCE (always large)
+Return ONLY valid JSON array, no markdown.
+Each: {"date":"<e.g. 02-Apr-26>","out":<withdrawal or 0>,"in":<deposit or 0>,"balance":<running balance>}
+Remove all commas from numbers. Skip summary rows. If no transaction rows visible, return [].`;
+  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,
+      messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:media,data:b64}},{type:"text",text:prompt}]}]})});
+  if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error((err.error?.message)||'HTTP '+res.status);}
+  const data=await res.json();
+  let txt=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join('\n');
+  txt=txt.replace(/```[\w]*\n?/g,'').trim();
+  const a=txt.indexOf('['),z=txt.lastIndexOf(']');
+  if(a<0||z<0)throw new Error('Unexpected AI response format');
+  const arr=JSON.parse(txt.slice(a,z+1));
+  return arr.filter(r=>r&&r.date&&parseDate(String(r.date)))
+    .map(r=>({date:String(r.date).trim(),desc:'',vdate:'',out:parseNum(r.out),in:parseNum(r.in),bal:parseNum(r.balance)}));
+}
+
 function renderRows(){
   const tb=document.getElementById('tbody');tb.innerHTML='';
   rows.forEach((r,i)=>{
     const tr=document.createElement('tr');
     tr.innerHTML=
       `<td class="l"><input class="l" value="${escHtml(r.date)}" oninput="rows[${i}].date=this.value"></td>`+
+      `<td class="l"><input class="l" style="min-width:140px" value="${escHtml(r.desc||'')}" oninput="rows[${i}].desc=this.value"></td>`+
+      `<td class="l"><input class="l" value="${escHtml(r.vdate||'')}" oninput="rows[${i}].vdate=this.value"></td>`+
       `<td><input value="${r.out?fmt(r.out):''}" oninput="rows[${i}].out=parseNum(this.value)"></td>`+
       `<td><input value="${r.in?fmt(r.in):''}" oninput="rows[${i}].in=parseNum(this.value)"></td>`+
       `<td><input value="${r.bal?fmt(r.bal):''}" oninput="rows[${i}].bal=parseNum(this.value)"></td>`+
@@ -384,78 +520,24 @@ function renderRows(){
   });
   document.getElementById('tableCard').style.display='block';
 }
-function addRow(){rows.push({date:'',out:0,in:0,bal:0});renderRows();}
+function addRow(){rows.push({date:'',desc:'',vdate:'',out:0,in:0,bal:0});renderRows();}
 function clearTable(){rows=[];renderRows();document.getElementById('resultCard').classList.remove('show');}
 
-// ── Image OCR ────────────────────────────────────────────────────
-document.getElementById('imgFile').addEventListener('change',function(e){
-  const f=e.target.files[0];if(!f)return;
-  const prev=document.getElementById('imgPreview');
-  const rd=new FileReader();
-  rd.onload=async()=>{
-    prev.src=rd.result;prev.style.display='block';
-    const b64=rd.result.split(',')[1];const media=f.type||'image/jpeg';
-    setStatus('<span class="spin"></span>กำลังให้ AI อ่านตัวเลขจากรูป…');
-    try{await ocrImage(b64,media);}
-    catch(err){setStatus('❌ อ่านรูปไม่สำเร็จ: '+err.message,'err');}
-  };
-  rd.readAsDataURL(f);
-});
-
-async function ocrImage(b64,media){
-  const prompt=`You are reading a bank statement table image.
-The table has these columns IN ORDER (left to right):
-1. Transaction date (วันที่ / ວັນທີ)
-2. Description / narration (may be 1-2 columns, skip them)
-3. Value date (another date column, skip it)
-4. WITHDRAWAL amount (ออก / ຖອນ / Debit) — money LEAVING the account. Large LAK numbers like 1,000,000 or blank.
-5. DEPOSIT amount (เข้า / ເຂົ້າ / Credit) — money ENTERING the account. Large LAK numbers or blank.
-6. RUNNING BALANCE (ยอดเหลือ / ຍອດ / Balance) — cumulative balance after each transaction. Always a large number.
-
-Extract EVERY transaction row. Return ONLY a valid JSON array — no text, no markdown fences.
-Each element: {"date":"<transaction date as shown e.g. 02-Feb-26>","out":<withdrawal amount or 0>,"in":<deposit amount or 0>,"balance":<running balance>}
-
-CRITICAL RULES:
-- The date in column 1 is the transaction date — use it, NOT the value date.
-- "out" must be the WITHDRAWAL column (4th column). If it is blank/dash → 0.
-- "in" must be the DEPOSIT column (5th column). If it is blank/dash → 0.
-- "balance" must be the RUNNING BALANCE (last numeric column, always large). Never use date numbers as balance.
-- Remove ALL commas from numbers: 1,000,000.00 → 1000000.00
-- SKIP summary rows: Total Withdraws, Total Deposit, Closing Balance, header rows.
-- A transaction has either "out">0 OR "in">0, never both large numbers simultaneously.`;
-
-  const res=await fetch("https://api.anthropic.com/v1/messages",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,
-      messages:[{role:"user",content:[
-        {type:"image",source:{type:"base64",media_type:media,data:b64}},
-        {type:"text",text:prompt}]}]})
-  });
-  if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error((err.error?.message)||'HTTP '+res.status);}
-  const data=await res.json();
-  let txt=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join('\n');
-  txt=txt.replace(/```[\w]*\n?/g,'').trim();
-  const a=txt.indexOf('['),z=txt.lastIndexOf(']');
-  if(a<0||z<0)throw new Error('AI ไม่ส่งข้อมูลกลับในรูปแบบที่คาดหวัง');
-  const arr=JSON.parse(txt.slice(a,z+1));
-  rows=arr.filter(r=>r&&r.date&&parseDate(String(r.date)))
-    .map(r=>({date:String(r.date).trim(),out:parseNum(r.out),in:parseNum(r.in),bal:parseNum(r.balance)}));
-  if(!rows.length)throw new Error('อ่านไม่เจอแถวข้อมูล — ลองถ่ายให้เห็นตัวเลขชัดขึ้น');
-  renderRows();
-  setStatus('✅ อ่านได้ '+rows.length+' แถว — ตรวจแก้แล้วกดคำนวณ','ok');
-}
-
-// ── Compute ──────────────────────────────────────────────────────
 function compute(){
   const allRows=[];
   document.querySelectorAll('#tbody tr').forEach(tr=>{
     const inp=tr.querySelectorAll('input');
-    allRows.push({date:inp[0].value,out:parseNum(inp[1].value),in:parseNum(inp[2].value),bal:parseNum(inp[3].value)});
+    if(inp.length>=6) allRows.push({
+      date:inp[0].value,
+      out:parseNum(inp[3].value),
+      in:parseNum(inp[4].value),
+      bal:parseNum(inp[5].value)
+    });
   });
   const valid=allRows.map(r=>({...r,d:parseDate(r.date)})).filter(r=>r.d);
-  if(!valid.length){setStatus('ยังไม่มีแถวข้อมูลที่มีวันที่ถูกต้อง','err');return;}
+  if(!valid.length){setStatus('No rows with valid dates','err');return;}
 
-  const monthMap={};const monthOrder=[];
+  const monthMap={},monthOrder=[];
   valid.forEach(r=>{
     const k=r.d.y+'-'+String(r.d.mo).padStart(2,'0');
     if(!monthMap[k]){monthMap[k]=[];monthOrder.push(k);}
@@ -464,96 +546,78 @@ function compute(){
   monthOrder.forEach(k=>monthMap[k].sort((a,b)=>a.d.d-b.d.d));
 
   const results=monthOrder.map(k=>{
-    const mo=+k.split('-')[1],y=+k.split('-')[0];
+    const mo=+k.split('-')[1], y=+k.split('-')[0];
     const daysInMonth=new Date(y,mo,0).getDate();
     const mRows=monthMap[k];
 
-    // ── ยอดท้ายวัน = แถวสุดท้ายของแต่ละวัน ──
-    // group by day, take last row's balance
     const byDay={};
-    mRows.forEach(r=>{ byDay[r.d.d]=r.bal; }); // sort already ascending, so last write wins = last row of day ✓
+    mRows.forEach(r=>{byDay[r.d.d]=r.bal;});
 
-    // ── Opening balance: ย้อนกลับทุก transaction ของวันแรกที่มีข้อมูล ──
-    // ไม่ว่าจะเริ่มวันไหน (วันที่ 1, 2, 5 ฯลฯ) ให้ย้อนทุกแถวของวันนั้นกลับไป
-    const firstDay = mRows[0].d.d;
-    const firstDayRows = mRows.filter(r=>r.d.d===firstDay);
-    // ย้อนกลับทุกแถวของวันแรก: เริ่มจาก balance ก่อนแถวแรกสุด
-    // = bal[0] + out[0] - in[0] (แถวแรก)
-    // แต่ถ้ามีหลายแถว ต้องย้อนทั้งหมดตั้งแต่แถวแรกถึงสุดท้ายของวัน
-    // สูตร: opening = bal_last_of_day + Σout_of_day - Σin_of_day
-    const sumOut = firstDayRows.reduce((s,r)=>s+(r.out||0),0);
-    const sumIn  = firstDayRows.reduce((s,r)=>s+(r.in||0),0);
-    const opening = byDay[firstDay] + sumOut - sumIn;
+    const firstDay=mRows[0].d.d;
+    const fdr=mRows.filter(r=>r.d.d===firstDay);
+    const sumOut=fdr.reduce((s,r)=>s+(r.out||0),0);
+    const sumIn=fdr.reduce((s,r)=>s+(r.in||0),0);
+    const rawOpen=byDay[firstDay]+sumOut-sumIn;
+    const opening=rawOpen>=0 ? rawOpen : byDay[firstDay];
 
-    let carry=opening,weighted=0;const segs=[];
+    let carry=opening, weighted=0;
+    const segs=[];
     for(let d=1;d<=daysInMonth;d++){
       if(byDay[d]!==undefined) carry=byDay[d];
       weighted+=carry;
       const last=segs[segs.length-1];
-      if(last&&last.bal===carry)last.end=d;
+      if(last&&last.bal===carry) last.end=d;
       else segs.push({start:d,end:d,bal:carry});
     }
     return{y,mo,daysInMonth,opening,weighted,adb:weighted/daysInMonth,segs,first:mRows[0]};
   });
 
   renderResults(results);
-  setStatus('✅ คำนวณเรียบร้อย '+results.length+' เดือน','ok');
+  setStatus('✅ Calculation complete — '+results.length+' month(s)','ok');
 }
 
 function toggleMonth(idx){
   const body=document.getElementById('mb-body-'+idx);
   const chev=document.getElementById('mb-chev-'+idx);
-  const open=body.classList.toggle('open');
-  chev.classList.toggle('open',open);
+  chev.classList.toggle('open',body.classList.toggle('open'));
 }
 
 function renderResults(results){
-  const rc=document.getElementById('resultCard');
-  rc.classList.add('show');
-
-  const sc=document.getElementById('summaryCard');
-  const sb=document.getElementById('summaryBody');
+  const rc=document.getElementById('resultCard');rc.classList.add('show');
+  const sc=document.getElementById('summaryCard'),sb=document.getElementById('summaryBody');
   if(results.length>1){
-    sc.style.display='block';
-    sb.innerHTML='';
+    sc.style.display='block';sb.innerHTML='';
     results.forEach(r=>{
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td class="l">${MONTHS[r.mo]} ${r.y}</td>`+
-        `<td class="mono" style="text-align:right">${r.daysInMonth}</td>`+
-        `<td class="mono gold" style="text-align:right">${fmt(r.adb)}</td>`;
+      tr.innerHTML=`<td class="l">${MONTHS[r.mo]} ${r.y}</td><td class="mono" style="text-align:right">${r.daysInMonth}</td><td class="mono gold" style="text-align:right">${fmt(r.adb)}</td>`;
       sb.appendChild(tr);
     });
-  } else {
-    sc.style.display='none';
-  }
-
+  }else sc.style.display='none';
   const mb=document.getElementById('monthBlocks');mb.innerHTML='';
   results.forEach((r,idx)=>{
-    const dir=r.first.in>0?`ฝาก ${fmt(r.first.in)} ลบออก`:(r.first.out>0?`ถอน ${fmt(r.first.out)} บวกกลับ`:'ไม่มีรายการ');
+    const dir=r.first.in>0?`Deposit ${fmt(r.first.in)} subtracted`:(r.first.out>0?`Withdrawal ${fmt(r.first.out)} added back`:'No transactions');
     const totalDays=r.segs.reduce((a,s)=>a+(s.end-s.start+1),0);
-    const warnHtml=totalDays!==r.daysInMonth?`<span class="warn">⚠️ วันรวมได้ ${totalDays} แต่เดือนมี ${r.daysInMonth} วัน</span>`:'';
+    const warnHtml=totalDays!==r.daysInMonth?`<span class="warn">⚠️ Days total ${totalDays} but month has ${r.daysInMonth}</span>`:'';
     let segRows='';
     r.segs.forEach(s=>{
       const n=s.end-s.start+1;
       const range=s.start===s.end?s.start+' '+MONTHS_SHORT[r.mo]:s.start+'–'+s.end+' '+MONTHS_SHORT[r.mo];
       segRows+=`<tr><td class="l">${range}</td><td class="mono">${fmt(s.bal)}</td><td class="mono">${n}</td><td class="mono">${fmt(s.bal*n)}</td></tr>`;
     });
-    const block=document.createElement('div');
-    block.className='card month-block';
+    const block=document.createElement('div');block.className='card month-block';
     block.innerHTML=`
       <div class="month-header" onclick="toggleMonth(${idx})">
         <span class="month-name">${MONTHS[r.mo]} ${r.y}</span>
-        <span><span class="month-adb">${fmt(r.adb)}</span><span class="month-unit">LAK</span>
-        <span class="chevron" id="mb-chev-${idx}">▼</span></span>
+        <span><span class="month-adb">${fmt(r.adb)}</span><span class="month-unit">LAK</span><span class="chevron" id="mb-chev-${idx}">▼</span></span>
       </div>
       <div class="month-body ${results.length===1?'open':''}" id="mb-body-${idx}">
         <table class="seg-table">
-          <thead><tr><th class="l">ช่วงวัน</th><th>Balance</th><th>Days</th><th>Weighted</th></tr></thead>
+          <thead><tr><th class="l">Date Range</th><th>Balance</th><th>Days</th><th>Weighted</th></tr></thead>
           <tbody>${segRows}</tbody>
         </table>
         <div class="sum-row"><span>Total Weighted</span><b>${fmt(r.weighted)}</b></div>
         <div class="sum-row"><span>÷ ${r.daysInMonth} Days</span><b>= ${fmt(r.adb)} LAK</b></div>
-        <div class="note-sm">ยอดยกมาวันที่ 1 = <b>${fmt(r.opening)}</b> (${dir}) ${warnHtml}</div>
+        <div class="note-sm">Opening balance Day 1 = <b>${fmt(r.opening)}</b> (${dir}) ${warnHtml}</div>
       </div>`;
     mb.appendChild(block);
   });
