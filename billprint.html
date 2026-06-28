@@ -472,16 +472,22 @@ function getDescValue(type){
 
 /* =========================================================
    แหล่งข้อมูลลูกค้า — สลับโหมดได้ที่นี่
-   "DEMO"   = ใช้ sampleCustomers ด้านล่าง (ค่าตัวอย่างล้วน)
-   "SHEETS" = ดึงจาก Google Sheets ผ่าน Google Apps Script Web App
-              (ใช้ contract เดียวกับโปรเจกต์ Bill Printing เดิมที่เคยทำไว้:
-              ชีตชื่อ DATA123 คอลัมน์ No/CONTRACT/CURRENCY/CUSTOMER/TEL/ACC NAME/Addr/Type
-              + google-apps-script.gs ที่ deploy เป็น Web app)
-   วิธีเปิดใช้ SHEETS: เปลี่ยน DATA_MODE เป็น "SHEETS" แล้วใส่ URL ที่ได้
-   จากตอน Deploy > New deployment > Web app ใน SHEETS_API_URL ด้านล่าง
+   "DEMO"     = ใช้ sampleCustomers ด้านล่าง (ค่าตัวอย่างล้วน)
+   "SUPABASE" = ดึงจาก Supabase (แนะนำ — เร็วกว่า ปลอดภัยกว่า Sheets,
+                รองรับ CORS จริงจึงใช้ fetch() ตรงๆได้ ไม่ต้องใช้ JSONP)
+   "SHEETS"   = ของเดิม (Google Apps Script + JSONP) เผื่ออยากย้อนกลับไปใช้
+
+   วิธีเปิดใช้ SUPABASE:
+   1. สร้างโปรเจกต์ที่ supabase.com (ฟรี)
+   2. สร้างตารางชื่อ "data123" แล้ว import data123_for_supabase.csv
+   3. เปิด RLS + เพิ่ม policy ให้ "anon" SELECT ได้ (ดูคำแนะนำที่ส่งให้)
+   4. เอา Project URL + anon public key มาใส่ด้านล่างนี้
+   5. เปลี่ยน DATA_MODE เป็น "SUPABASE"
    ========================================================= */
-var DATA_MODE = "SHEETS";       // "DEMO" | "SHEETS"
-var SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyQ3WlG2KtrGF_RdXK0YRUdo6hQyB-VmXvPa5FE1F13ePWE5a0DGdLQCuLj_IAibXLK/exec";      // เช่น "https://script.google.com/macros/s/XXXXXXXX/exec"
+var DATA_MODE = "SUPABASE";        // "DEMO" | "SUPABASE" | "SHEETS"
+var SUPABASE_URL = "https://advbyotpcibpjalfqbwj.supabase.co";             // เช่น "https://xxxxxxxx.supabase.co"
+var SUPABASE_ANON_KEY = "sb_publishable_bZgaOm9_2fbYxS90QtsuOQ_w3kmxNKh";        // anon public key จากหน้า Project Settings > API
+var SHEETS_API_URL = "";           // ของเดิม (ใช้เฉพาะถ้า DATA_MODE = "SHEETS")
 
 var sampleCustomers = [
   { CONTRACT:"0330400410000001", CURRENCY:"LAK", CUSTOMER:"ລູກຄ້າຕົວຢ່າງ 1", TEL:"020XXXXXXX1", ACCNAME:"ລູກຄ້າຕົວຢ່າງ 1", Addr:"ບ້ານທົດສອບ, ນະຄອນຫຼວງ (DEMO)" },
@@ -524,15 +530,34 @@ function jsonpRequest(url, onData, onError, timeoutMs){
 
 function searchCustomer(btn){
   var block = btn.closest(".account-block");
-  var q = block.querySelector(".search-input").value.trim().toUpperCase();
+  var q = block.querySelector(".search-input").value.trim();
   var statusEl = block.querySelector(".search-status");
   if(!q){ statusEl.textContent=""; statusEl.className="search-status"; return; }
 
+  if (DATA_MODE === "SUPABASE" && SUPABASE_URL && SUPABASE_ANON_KEY){
+    statusEl.textContent = "⏳ ກຳລັງຄົ້ນຫາ..."; statusEl.className = "search-status";
+    var esc = q.replace(/[%*]/g, ""); // กันตัวอักษรพิเศษของ pattern matching หลุดเข้าไปใน query
+    var filter = "or=(contract.ilike.*" + encodeURIComponent(esc) + "*,customer.ilike.*" + encodeURIComponent(esc) + "*)";
+    var url = SUPABASE_URL + "/rest/v1/data123?select=*&" + filter + "&limit=12";
+    fetch(url, { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY } })
+      .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function(rows){
+        if (rows && rows.length){
+          var r0 = rows[0];
+          var hit = { CONTRACT:r0.contract, CURRENCY:r0.currency, CUSTOMER:r0.customer, TEL:r0.tel, ACCNAME:r0.accname, Addr:r0.addr };
+          applyHit(block, hit, statusEl, "Supabase");
+        } else {
+          statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນໃນ Supabase"; statusEl.className = "search-status err";
+        }
+      })
+      .catch(function(err){
+        statusEl.textContent = "✗ ເຊື່ອມຕໍ່ Supabase ບໍ່ໄດ້ (" + err.message + ")"; statusEl.className = "search-status err";
+      });
+    return;
+  }
+
   if (DATA_MODE === "SHEETS" && SHEETS_API_URL){
     statusEl.textContent = "⏳ ກຳລັງຄົ້ນຫາ..."; statusEl.className = "search-status";
-    // ใช้ JSONP (สร้าง <script> tag) แทน fetch() เพราะ Apps Script Web App
-    // ไม่สามารถส่ง header Access-Control-Allow-Origin ได้ ทำให้ fetch ติด CORS เสมอ
-    // — ต้องแก้ doGet() ใน Apps Script ให้รองรับ ?callback= ด้วย (ดูคำแนะนำที่ส่งให้)
     jsonpRequest(SHEETS_API_URL + "?q=" + encodeURIComponent(q),
       function(rows){
         if (rows && rows.length){
@@ -550,6 +575,7 @@ function searchCustomer(btn){
     return;
   }
 
+  q = q.toUpperCase();
   var hit = sampleCustomers.find(function(c){ return c.CONTRACT.indexOf(q) >= 0 || c.CUSTOMER.toUpperCase().indexOf(q) >= 0; });
   if(hit){
     applyHit(block, hit, statusEl, "demo");
