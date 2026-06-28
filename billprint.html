@@ -516,7 +516,7 @@ function jsonpRequest(url, onData, onError, timeoutMs){
   };
   setTimeout(function(){
     if (!done) { done = true; cleanup(); onError(new Error("หมดเวลารอ (timeout)")); }
-  }, timeoutMs || 10000);
+  }, timeoutMs || 30000);
   var sep = url.indexOf("?") >= 0 ? "&" : "?";
   script.src = url + sep + "callback=" + cbName;
   document.body.appendChild(script);
