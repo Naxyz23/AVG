@@ -500,6 +500,28 @@ function applyHit(block, hit, statusEl, tag){
   recompute();
 }
 
+function jsonpRequest(url, onData, onError, timeoutMs){
+  var cbName = "jsonp_cb_" + Date.now() + "_" + Math.floor(Math.random()*10000);
+  var script = document.createElement("script");
+  var done = false;
+  var cleanup = function(){
+    if (window[cbName]) delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  };
+  window[cbName] = function(data){
+    done = true; cleanup(); onData(data);
+  };
+  script.onerror = function(){
+    if (!done) { done = true; cleanup(); onError(new Error("โหลด script ไม่สำเร็จ")); }
+  };
+  setTimeout(function(){
+    if (!done) { done = true; cleanup(); onError(new Error("หมดเวลารอ (timeout)")); }
+  }, timeoutMs || 10000);
+  var sep = url.indexOf("?") >= 0 ? "&" : "?";
+  script.src = url + sep + "callback=" + cbName;
+  document.body.appendChild(script);
+}
+
 function searchCustomer(btn){
   var block = btn.closest(".account-block");
   var q = block.querySelector(".search-input").value.trim().toUpperCase();
@@ -508,20 +530,23 @@ function searchCustomer(btn){
 
   if (DATA_MODE === "SHEETS" && SHEETS_API_URL){
     statusEl.textContent = "⏳ ກຳລັງຄົ້ນຫາ..."; statusEl.className = "search-status";
-    fetch(SHEETS_API_URL + "?q=" + encodeURIComponent(q))
-      .then(function(r){ return r.json(); })
-      .then(function(rows){
+    // ใช้ JSONP (สร้าง <script> tag) แทน fetch() เพราะ Apps Script Web App
+    // ไม่สามารถส่ง header Access-Control-Allow-Origin ได้ ทำให้ fetch ติด CORS เสมอ
+    // — ต้องแก้ doGet() ใน Apps Script ให้รองรับ ?callback= ด้วย (ดูคำแนะนำที่ส่งให้)
+    jsonpRequest(SHEETS_API_URL + "?q=" + encodeURIComponent(q),
+      function(rows){
         if (rows && rows.length){
-          var r0 = rows[0]; // รูปแบบเดียวกับ google-apps-script.gs เดิม: c,cur,n,t,a,b,ty
+          var r0 = rows[0];
           var hit = { CONTRACT:r0.c, CURRENCY:r0.cur, CUSTOMER:r0.n, TEL:r0.t, ACCNAME:r0.a, Addr:r0.b };
           applyHit(block, hit, statusEl, "Sheets");
         } else {
           statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນໃນ Google Sheets"; statusEl.className = "search-status err";
         }
-      })
-      .catch(function(err){
+      },
+      function(err){
         statusEl.textContent = "✗ ເຊື່ອມຕໍ່ Sheets ບໍ່ໄດ້ (" + err.message + ")"; statusEl.className = "search-status err";
-      });
+      }
+    );
     return;
   }
 
