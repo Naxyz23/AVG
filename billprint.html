@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AVG Suite</title>
+<title>EZ Teller</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600;700&family=Noto+Serif:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
@@ -206,6 +206,8 @@ table.rate-tbl tr.grp-start td{border-top:1px solid var(--line)}
 .bill-card__header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 24px 14px;background:linear-gradient(135deg, var(--bp-navy-deep), var(--bp-navy) 130%);flex-wrap:wrap;}
 .bill-card__header h1{font-size:20px;margin:0;letter-spacing:.3px;}
 .bill-card__header h1 small{display:block;font-size:11px;font-weight:400;color:#cfe6f7;margin-top:3px;letter-spacing:.5px;}
+.bp-header-credit{font-size:11px;color:#cfe6f7;letter-spacing:.3px;white-space:nowrap;}
+.bp-header-credit b{color:var(--bp-gold);}
 .bill-card__meta{font-size:11px;color:#cfe6f7;text-align:right;}
 .bill-card__meta span{color:var(--bp-gold);font-weight:600;}
 
@@ -253,10 +255,7 @@ table.rate-tbl tr.grp-start td{border-top:1px solid var(--line)}
 .input-detail.no-icon .form-input,.input-detail.no-icon .form-select{padding-left:12px;}
 .form-input::placeholder{color:transparent;}
 .form-input:focus,.form-select:focus{border-color:var(--bp-gold);}
-.float-label{position:absolute;left:12px;top:-8px;font-size:10.5px;font-weight:500;color:var(--bp-muted);background:var(--bp-panel);padding:0 6px;opacity:0;pointer-events:none;transition:opacity .25s ease;white-space:nowrap;}
-.input-detail .form-input:not(:placeholder-shown) + .float-label,
-.input-detail .form-input:focus + .float-label,
-.input-detail .form-select + .float-label{opacity:1;}
+.float-label{position:absolute;left:12px;top:-8px;font-size:10.5px;font-weight:500;color:var(--bp-muted);background:var(--bp-panel);padding:0 6px;opacity:1;pointer-events:none;transition:opacity .25s ease;white-space:nowrap;}
 .input-detail .form-select:focus + .float-label{color:var(--bp-gold);}
 
 .txn-row{display:flex;gap:10px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px dashed var(--bp-border);flex-wrap:wrap;}
@@ -272,6 +271,8 @@ table.rate-tbl tr.grp-start td{border-top:1px solid var(--line)}
 
 .bill-amount{padding:22px 24px;}
 .amount-row{display:grid;grid-template-columns:1fr 1.3fr;gap:0;border:1px solid var(--bp-border);border-radius:8px;margin-bottom:7px;overflow:hidden;}
+.amount-row.denom-inactive{opacity:.35;}
+.amount-row.denom-inactive input{cursor:not-allowed;}
 .amount-row .denom{display:flex;align-items:center;justify-content:flex-end;padding:8px 10px;border-right:1px solid var(--bp-border);font-weight:600;color:var(--bp-muted);font-size:13.5px;}
 .amount-row input{border:0;background:transparent;color:var(--bp-text);font-weight:700;font-size:14px;padding:8px 10px;width:100%;outline:none;text-align:right;}
 .amount-row input:focus{background:rgba(244,180,0,.08);}
@@ -292,57 +293,121 @@ footer b{color:var(--bp-gold);}
 
 @media print{
   @page{ size: 8.5in 11in; margin:0; }
-  body{ background:#fff !important; }
-  .wrap, .topbar, #viewBill{ display:none !important; }
+  html, body{ width:8.5in; height:10.95in; margin:0 !important; padding:0 !important; overflow:hidden !important; background:#fff !important; }
+  .wrap, .topbar, #viewBill, .calib-bar, .preview-overlay{ display:none !important; }
   .print-only{ display:block; }
-
-  /* หน้ากระดาษ 8.5x11in เต็มหน้า ระบบพิกัดอ้างจากมุมบนซ้ายของหน้าโดยตรง
-     (ไม่พึ่ง margin ของ @page เพื่อกันความเพี้ยนระหว่างเบราว์เซอร์/ไดร์เวอร์) */
-  .print-page{
-    position:relative; width:8.5in; height:11in; background:#fff;
-    font-family:'Phetsarath OT','Noto Sans Lao','IBM Plex Sans',sans-serif;
-    color:#000;
-  }
-
-  /* ===== ใบມອບ — grid ตรงกับ A1:K16 ของ sheet ໃບມອບ
-     คอลัมน์: สัดส่วนความกว้างมาจาก column width จริงในไฟล์ Excel (96 หน่วย)
-              แปลงเป็น pt ด้วยอัตราที่คาลิเบรตจากตำแหน่งจริงที่ render ออกมา (~5.83pt/หน่วย)
-     แถว: สูงตรงตาม row height จริง (pt) ทุกแถว ไม่มีการปัดเศษ */
-  .grid-deposit{
-    position:absolute; top:54pt; left:18pt;
-    display:grid;
-    grid-template-columns: 109.31pt 56.11pt 18.95pt 21.13pt 30.61pt 48.09pt 33.52pt 88.91pt 39.35pt 84.54pt 29.15pt;
-    grid-template-rows: 26.25pt 19.5pt 19.5pt 17.25pt 18.75pt 15pt 18pt 16.5pt 18.75pt 18.75pt 18.75pt 18.75pt 18.75pt 18.75pt 18.75pt 18.75pt;
-  }
-  .grid-deposit .gcell{ display:flex; padding:0 2pt; overflow:hidden; white-space:nowrap; font-size:11pt; }
-  .grid-deposit .gcell.small{ font-size:10pt; }
-  .grid-deposit .v-top{ align-items:flex-start; }
-  .grid-deposit .v-center{ align-items:center; }
-  .grid-deposit .v-bottom{ align-items:flex-end; }
-  .grid-deposit .h-center{ justify-content:center; text-align:center; }
-
-  .gf-customer{ grid-column:1/7; grid-row:2/3; }
-  .gf-tel{ grid-column:8/9; grid-row:2/3; }
-  .gf-addr{ grid-column:1/5; grid-row:3/4; }
-  .gf-accname{ grid-column:2/9; grid-row:5/7; }
-  .gf-contract{ grid-column:3/8; grid-row:7/9; }
-  .gf-cur{ grid-column:1/2; grid-row:9/10; }
-  .gf-amount{ grid-column:3/8; grid-row:9/10; }
-  .gf-curword{ grid-column:8/9; grid-row:9/10; }
-  .gf-words{ grid-column:1/9; grid-row:10/11; white-space:normal; line-height:1.15; }
-  .gf-desc{ grid-column:2/9; grid-row:11/12; }
-  /* J2:J16 — ช่องแยกประเภทธนบัตร 15 แถว (ตัดที่ row16 ตาม print area จริง) */
-  .gf-denom{ grid-column:10/11; }
-
-  /* ===== fallback แบบเรียบง่ายสำหรับ ใบຖອນ/ໃບໂອນ
-     (ยังไม่ได้คาลิเบรตตำแหน่งแบบเป๊ะระดับ pt — ใช้ layout แบบ list ชัดเจนแทนไปก่อน) */
-  .print-fallback{ padding:0.9in 0.6in 0.6in; font-size:11pt; line-height:1.9; }
-  .print-fallback h2{ font-size:13pt; margin:0 0 14pt; text-align:center; letter-spacing:.5pt; }
-  .print-fallback dl{ display:grid; grid-template-columns:140pt 1fr; gap:4pt 10pt; margin:0 0 14pt; }
-  .print-fallback dt{ color:#444; }
-  .print-fallback .pf-total{ margin-top:10pt; padding:10pt 14pt; border:1pt solid #999; }
-  .print-fallback .pf-total b{ font-size:13pt; }
+  .print-page{ box-shadow:none !important; height:10.95in !important; overflow:hidden !important; }
 }
+
+/* =========================================================
+   PRINT PAGE — ระบบพิกัด absolute ต่อช่อง (ปรับตำแหน่งทีละช่องได้)
+   ฐานพิกัดมาจาก grid เดิมที่คาลิเบรตกับ Excel แล้ว
+   ตำแหน่งจริง = ฐาน + offset รวมทั้งหน้า + offset เฉพาะช่อง
+   ========================================================= */
+.print-page{
+  position:relative; width:8.5in; height:11in; background:#fff;
+  font-family:'Phetsarath OT','Noto Sans Lao','IBM Plex Sans',sans-serif;
+  color:#000; margin:0 auto;
+}
+.print-page .origin{
+  position:absolute;
+  top: calc(54pt + var(--print-offset-y, 0pt));
+  left: calc(18pt + var(--print-offset-x, 0pt));
+  width:0; height:0;
+}
+.pf{
+  position:absolute; display:flex; align-items:center; justify-content:center;
+  text-align:center; overflow:hidden; white-space:nowrap; font-size:11pt;
+  box-sizing:border-box; padding:0 2pt;
+}
+.pf.small{ font-size:10pt; }
+.pf.v-top{ align-items:flex-start; }
+.pf.v-bottom{ align-items:flex-end; }
+.pf.wrap-text{ white-space:normal; line-height:1.15; }
+
+/* fallback ใบຖອນ/ໃບໂອນ */
+.print-fallback{ position:absolute;
+  top: calc(0.9in + var(--print-offset-y, 0pt)); left: calc(0.6in + var(--print-offset-x, 0pt));
+  right:0.6in; font-size:11pt; line-height:1.9; }
+.print-fallback h2{ font-size:13pt; margin:0 0 14pt; text-align:center; letter-spacing:.5pt; }
+.print-fallback dl{ display:grid; grid-template-columns:140pt 1fr; gap:4pt 10pt; margin:0 0 14pt; }
+.print-fallback dt{ color:#444; }
+.print-fallback .pf-total{ margin-top:10pt; padding:10pt 14pt; border:1pt solid #999; }
+.print-fallback .pf-total b{ font-size:13pt; }
+
+/* ===== Preview overlay (บนจอ ไม่ใช่ตอนพิมพ์) ===== */
+.preview-overlay{
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(4,18,30,.82); backdrop-filter:blur(3px);
+  overflow:auto; padding:24px 16px 120px;
+}
+.preview-overlay.open{ display:block; }
+.preview-head{
+  position:sticky; top:-24px; z-index:5; margin:-24px -16px 18px; padding:12px 18px;
+  background:#0a1f31; border-bottom:1px solid #1c4a6b;
+  display:flex; align-items:center; gap:10px;
+}
+.preview-title{ color:#eaf3fb; font-weight:700; font-size:14px; }
+.preview-title i{ color:var(--gold,#f4b400); margin-right:6px; }
+.preview-spacer{ flex:1; }
+.preview-stage{
+  margin:0 auto; transform-origin:top center;
+  box-shadow:0 24px 60px rgba(0,0,0,.55); position:relative;
+}
+.preview-stage .print-page{ outline:1px solid #cdd9e4; }
+/* guide grid lines on preview only */
+.preview-stage.show-guides .print-page::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 71.5px, rgba(2,116,191,.10) 71.5px, rgba(2,116,191,.10) 72px),
+    repeating-linear-gradient(90deg, transparent, transparent 71.5px, rgba(2,116,191,.10) 71.5px, rgba(2,116,191,.10) 72px);
+}
+.preview-stage .pf{ outline:1px dashed rgba(2,116,191,.35); cursor:default; }
+.preview-stage .pf[data-field^="denom"]{ border-bottom:1px solid rgba(10,40,60,.45); }
+.preview-stage.calib .pf{ cursor:pointer; }
+.preview-stage.calib .pf:hover{ outline:1.5px solid var(--bp-navy, #0274bf); background:rgba(2,116,191,.06); }
+.preview-stage.calib .pf.sel{ outline:2px solid var(--gold, #f4b400); background:rgba(244,180,0,.14); }
+
+/* ===== Calibration control bar ===== */
+.calib-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:1001;
+  background:#0a1f31; border-top:1px solid #1c4a6b; color:#eaf3fb;
+  padding:12px 16px; display:none; flex-wrap:wrap; gap:12px 18px;
+  align-items:center; justify-content:center; font-size:13px;
+  box-shadow:0 -10px 30px rgba(0,0,0,.4);
+}
+.preview-overlay.open ~ .calib-bar{ display:flex; }
+.calib-group{ display:flex; align-items:center; gap:8px; }
+.calib-group .lbl{ color:#7fa8c9; font-size:11px; letter-spacing:.3px; }
+.calib-target{ font-weight:700; color:var(--gold,#f4b400); min-width:90px; text-align:center; }
+.pad{ display:grid; grid-template-columns:repeat(3,30px); grid-template-rows:repeat(3,30px); gap:3px; }
+.pad button{
+  border:1px solid #1c4a6b; background:#10324d; color:#eaf3fb; border-radius:7px;
+  cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;
+}
+.pad button:hover{ background:#16486e; }
+.pad button:disabled{ opacity:.25; cursor:default; }
+.pad .blank{ visibility:hidden; }
+.calib-btn{
+  border:1px solid #1c4a6b; background:#10324d; color:#eaf3fb; border-radius:8px;
+  padding:9px 16px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;
+}
+.calib-btn:hover{ background:#16486e; }
+.calib-btn.primary{ background:linear-gradient(90deg,#0274bf,#0a93e8); border-color:#0274bf; }
+.calib-btn.gold{ background:linear-gradient(180deg,#f4b400,#e0a300); color:#1d1300; border-color:#e0a300; }
+.calib-btn.danger{ background:#7a2620; border-color:#a3392f; }
+.calib-step{ display:flex; align-items:center; gap:6px; }
+.calib-step select{ background:#10324d; color:#eaf3fb; border:1px solid #1c4a6b; border-radius:6px; padding:5px 8px; font-family:inherit; font-size:12px; }
+
+/* ปุ่ม Preview/Edit ในแถบเครื่องมือ Bill Printing (บนจอ) */
+.bill-toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:0 24px 18px; }
+.bill-toolbar .tbtn{
+  display:inline-flex; align-items:center; gap:7px;
+  border:1px solid var(--bp-border); background:rgba(255,255,255,.05); color:var(--bp-text);
+  border-radius:9px; padding:9px 16px; font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer;
+}
+.bill-toolbar .tbtn:hover{ background:rgba(255,255,255,.12); }
+.bill-toolbar .tbtn .sub{ font-size:10.5px; color:var(--bp-muted); font-weight:400; }
 
 .bp-page-wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px;background:transparent;color:var(--bp-text);font-family:'IBM Plex Sans','Noto Sans Lao',sans-serif;font-size:15px;border-radius:0;}
 #viewBill .bp-footer{text-align:center;color:var(--bp-muted);font-size:11.5px;margin-top:18px;letter-spacing:.3px;}
@@ -354,15 +419,15 @@ footer b{color:var(--bp-gold);}
   <div class="topbar">
     <span class="nav-hint">ກົດເພື່ອສະຫຼັບໜ້າ &middot; tap to switch</span>
     <nav class="nav">
-      <button class="nav-btn on" id="navAdb" onclick="showView('adb')">Average Balance<small>ADB</small></button>
+      <button class="nav-btn on" id="navBill" onclick="showView('bill')">Bill Printing<small>ໃບບິນ</small></button>
+      <button class="nav-btn" id="navAdb" onclick="showView('adb')">Average Balance<small>ADB</small></button>
       <button class="nav-btn" id="navInt" onclick="showView('int')">Deposit Interest<small>Rates &amp; calc</small></button>
       <button class="nav-btn" id="navFee" onclick="showView('fee')">Service Fees<small>Fee calc</small></button>
-      <button class="nav-btn" id="navBill" onclick="showView('bill')">Bill Printing<small>ໃບບິນ</small></button>
     </nav>
   </div>
 
-<div class="wrap">
-  <div id="viewAdb">
+<div class="wrap" style="display:none">
+  <div id="viewAdb" style="display:none">
   <h1>Average Daily Balance</h1>
   <p class="sub">Supports multi-month data — calculated separately per month automatically</p>
 
@@ -532,20 +597,22 @@ footer b{color:var(--bp-gold);}
     <div class="int-note" style="margin:0 2px">ທຸກອັດຕາອ້າງອີງຈາກໃບແຈ້ງການຄ່າທຳນຽມ LDB (SWIFT 4888 · E-BORDER 2363 · Western Union · ທົ່ວໄປ 1442) — ກະລຸນາກວດສອບກັບສາຂາ ກ່ອນເຮັດທຸລະກຳຈິງ</div>
   </div><!-- /viewFee -->
 
-  <footer>Create by DNAy</footer>
+  <footer>Create by NANA</footer>
 </div>
 
-<div id="viewBill" style="display:none">
+<div id="viewBill">
   <div class="bp-page-wrap">
   <div class="bill-card">
     <div class="bill-card__header">
-      <h1>AVG <small class="lao">ລະບົບພິມໃບບິນ &middot; Bill Printing</small></h1>
+      <h1>Teller ASSISTANT <small class="lao">ລະບົບພິມໃບບິນ &middot; Bill Printing</small></h1>
+      <div class="bp-header-credit">EZ Teller &middot; Bill Printing &middot; Create by <b>NANA</b></div>
     </div>
 
     <div class="type-tabs">
       <button class="active" data-type="deposit" onclick="switchType('deposit')"><i class="fa-solid fa-hand-holding-dollar"></i><span class="lao">ໃບມອບ</span></button>
       <button data-type="withdraw" onclick="switchType('withdraw')"><i class="fa-solid fa-money-bill-wave"></i><span class="lao">ໃບຖອນ</span></button>
       <button data-type="transfer" onclick="switchType('transfer')"><i class="fa-solid fa-right-left"></i><span class="lao">ໃບໂອນ</span></button>
+      <button data-type="deposit_old" onclick="switchType('deposit_old')"><i class="fa-regular fa-clock"></i><span class="lao">ໃບມອບ (ເກົ່າ)</span></button>
     </div>
 
     <div class="bill-grid">
@@ -559,11 +626,12 @@ footer b{color:var(--bp-gold);}
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
               <input type="text" class="form-input search-input" placeholder="ເລກບັນຊີ ຫຼື ຊື່...">
               <button type="button" class="search-btn" onclick="searchCustomer(this)"><i class="fa-solid fa-search"></i></button>
+                        <span class="float-label lao">ຄົ້ນຫາບັນຊີ</span>
             </form>
             <div class="search-status"></div>
             <div class="field-grid">
               <div class="input-detail"><i class="fa-solid fa-list icon-inside"></i><input class="form-input" data-field="CONTRACT" placeholder="ເລກບັນຊີ..." required><span class="float-label lao">ເລກບັນຊີ</span></div>
-              <div class="input-detail"><i class="fa-regular fa-circle-user icon-inside"></i><input class="form-input" data-field="CUSTOMER" placeholder="ຊື່ບັນຊີ..." required><span class="float-label lao">ຊື່ບັນຊີ</span></div>
+              <div class="input-detail"><i class="fa-regular fa-circle-user icon-inside"></i><input class="form-input" data-field="CUSTOMER" placeholder="ຊື່ຜູ້ມອບ..." required><span class="float-label lao">ຊື່ຜູ້ມອບ</span></div>
               <div class="input-detail"><i class="fa-solid fa-phone icon-inside"></i><input class="form-input" data-field="TEL" placeholder="ເບີໂທ..."><span class="float-label lao">ເບີໂທ</span></div>
               <div class="input-detail no-icon"><select class="form-select" data-field="CURRENCY" onchange="onCurrencyChange(this)">
                 <option value="LAK">LAK ₭</option><option value="THB">THB ฿</option><option value="USD">USD $</option><option value="CNY">CNY ¥</option>
@@ -590,6 +658,7 @@ footer b{color:var(--bp-gold);}
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
               <input type="text" class="form-input search-input" placeholder="ເລກບັນຊີ ຫຼື ຊື່...">
               <button type="button" class="search-btn" onclick="searchCustomer(this)"><i class="fa-solid fa-search"></i></button>
+                        <span class="float-label lao">ຄົ້ນຫາບັນຊີ</span>
             </form>
             <div class="search-status"></div>
             <div class="field-grid">
@@ -600,11 +669,43 @@ footer b{color:var(--bp-gold);}
                 <option value="LAK">LAK ₭</option><option value="THB">THB ฿</option><option value="USD">USD $</option><option value="CNY">CNY ¥</option>
               </select><span class="float-label lao">ສະກຸນເງິນ</span></div>
               <div class="input-detail"><i class="fa-solid fa-location-dot icon-inside"></i><input class="form-input" data-field="Addr" placeholder="ທີ່ຢູ່..."><span class="float-label lao">ທີ່ຢູ່</span></div>
+              <div class="input-detail"><i class="fa-regular fa-id-card icon-inside"></i><input class="form-input" id="withdrawerName" placeholder="ຊື່ຜູ້ຖອນ..."><span class="float-label lao">ຊື່ຜູ້ຖອນ</span></div>
             </div>
           </div>
-          <div class="input-detail no-icon" style="margin-top:14px;"><textarea class="form-input" id="desc-withdraw" rows="2" placeholder="ເນື້ອໃນການຖອນ..."></textarea><span class="float-label lao">ເນື້ອໃນ</span></div>
           <div class="txn-row">
             <button class="print-btn" onclick="doPrint('withdraw')"><i class="fa-solid fa-print"></i> ພິມໃບບິນ</button>
+          </div>
+        </div>
+
+        <!-- ---------- DEPOSIT (OLD FORM) ---------- -->
+        <div class="panel" id="panel-deposit_old">
+          <div class="section-title lao">ມອບສົດເຂົ້າບັນຊີ (ແບບເກົ່າ)</div>
+          <div class="account-block" data-role="single">
+            <form class="search-form" onsubmit="event.preventDefault(); this.querySelector('.search-btn').click(); return false;">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" class="form-input search-input" placeholder="ເລກບັນຊີ ຫຼື ຊື່...">
+              <button type="button" class="search-btn" onclick="searchCustomer(this)"><i class="fa-solid fa-search"></i></button>
+                        <span class="float-label lao">ຄົ້ນຫາບັນຊີ</span>
+            </form>
+            <div class="search-status"></div>
+            <div class="field-grid">
+              <div class="input-detail"><i class="fa-solid fa-list icon-inside"></i><input class="form-input" data-field="CONTRACT" placeholder="ເລກບັນຊີ..." required><span class="float-label lao">ເລກບັນຊີ</span></div>
+              <div class="input-detail"><i class="fa-regular fa-circle-user icon-inside"></i><input class="form-input" data-field="CUSTOMER" placeholder="ຊື່ຜູ້ມອບ..." required><span class="float-label lao">ຊື່ຜູ້ມອບ</span></div>
+              <div class="input-detail"><i class="fa-solid fa-phone icon-inside"></i><input class="form-input" data-field="TEL" placeholder="ເບີໂທ..."><span class="float-label lao">ເບີໂທ</span></div>
+              <div class="input-detail no-icon"><select class="form-select" data-field="CURRENCY" onchange="onCurrencyChange(this)">
+                <option value="LAK">LAK ₭</option><option value="THB">THB ฿</option><option value="USD">USD $</option><option value="CNY">CNY ¥</option>
+              </select><span class="float-label lao">ສະກຸນເງິນ</span></div>
+              <div class="input-detail"><i class="fa-regular fa-id-card icon-inside"></i><input class="form-input" data-field="ACCNAME" placeholder="ຊື່ບັນຊີ (ACC NAME)..."><span class="float-label lao">ຊື່ບັນຊີ (ACC&nbsp;NAME)</span></div>
+              <div class="input-detail"><i class="fa-solid fa-location-dot icon-inside"></i><input class="form-input" data-field="Addr" placeholder="ທີ່ຢູ່..."><span class="float-label lao">ທີ່ຢູ່</span></div>
+            </div>
+          </div>
+          <div class="input-detail no-icon" style="margin-top:14px;">
+            <select class="form-select" id="descSelect-deposit_old" onchange="onDescChange(this,'deposit_old')"></select>
+            <span class="float-label lao">ເນື້ອໃນ</span>
+          </div>
+          <div class="input-detail no-icon" id="descCustomWrap-deposit_old" style="display:none;"><input class="form-input" id="descCustom-deposit_old" placeholder="ລະບຸເນື້ອໃນເອງ..."><span class="float-label lao">ເນື້ອໃນ (ກຳໜົດເອງ)</span></div>
+          <div class="txn-row">
+            <button class="print-btn" onclick="doPrint('deposit_old')"><i class="fa-solid fa-print"></i> ພິມໃບບິນ</button>
           </div>
         </div>
 
@@ -617,6 +718,7 @@ footer b{color:var(--bp-gold);}
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
                 <input type="text" class="form-input search-input" placeholder="ບັນຊີເບື້ອງໜີ້...">
                 <button type="button" class="search-btn" onclick="searchCustomer(this)"><i class="fa-solid fa-search"></i></button>
+                            <span class="float-label lao">ຄົ້ນຫາບັນຊີ</span>
               </form>
               <div class="search-status"></div>
               <div class="input-detail"><i class="fa-solid fa-list icon-inside"></i><input class="form-input" data-field="CONTRACT" placeholder="ເລກບັນຊີ..." required><span class="float-label lao">ເລກບັນຊີເບື້ອງໜີ້</span></div>
@@ -631,11 +733,12 @@ footer b{color:var(--bp-gold);}
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
                 <input type="text" class="form-input search-input" placeholder="ບັນຊີເບື້ອງມີ...">
                 <button type="button" class="search-btn" onclick="searchCustomer(this)"><i class="fa-solid fa-search"></i></button>
+                            <span class="float-label lao">ຄົ້ນຫາບັນຊີ</span>
               </form>
               <div class="search-status"></div>
               <div class="input-detail"><i class="fa-solid fa-list icon-inside"></i><input class="form-input" data-field="CONTRACT" placeholder="ເລກບັນຊີ..." required><span class="float-label lao">ເລກບັນຊີເບື້ອງມີ</span></div>
               <div class="input-detail"><i class="fa-regular fa-circle-user icon-inside"></i><input class="form-input" data-field="CUSTOMER" placeholder="ຊື່ບັນຊີ..." required><span class="float-label lao">ຊື່ບັນຊີເບື້ອງມີ</span></div>
-              <div class="input-detail"><i class="fa-regular fa-id-card icon-inside"></i><input class="form-input" placeholder="ຜູ້ສັ່ງໂອນ..."><span class="float-label lao">ຜູ້ສັ່ງໂອນ</span></div>
+              <div class="input-detail"><i class="fa-regular fa-id-card icon-inside"></i><input class="form-input" id="transferOrderer" placeholder="ຜູ້ສັ່ງໂອນ..."><span class="float-label lao">ຜູ້ສັ່ງໂອນ</span></div>
             </div>
           </div>
           <div class="input-detail no-icon" style="margin-top:6px;">
@@ -648,10 +751,24 @@ footer b{color:var(--bp-gold);}
           <div class="nps-body" id="nps-body">
             <div class="section-title lao" style="margin-top:14px;">ໂອນ NPS</div>
             <div class="field-grid">
-              <div class="input-detail"><i class="fa-solid fa-building-columns icon-inside"></i><input class="form-input" placeholder="ຊື່ທະນາຄານ..."><span class="float-label lao">ຊື່ທະນາຄານ</span></div>
-              <div class="input-detail"><i class="fa-solid fa-list icon-inside"></i><input class="form-input" placeholder="ເລກບັນຊີ..."><span class="float-label lao">ເລກບັນຊີ</span></div>
-              <div class="input-detail" style="grid-column:1/3;"><i class="fa-regular fa-circle-user icon-inside"></i><input class="form-input" placeholder="ຊື່ບັນຊີ..."><span class="float-label lao">ຊື່ບັນຊີ</span></div>
+              <div class="input-detail"><i class="fa-solid fa-building-columns icon-inside"></i><input class="form-input" id="npsBank" placeholder="ຊື່ທະນາຄານ..."><span class="float-label lao">ຊື່ທະນາຄານ</span></div>
+              <div class="input-detail"><i class="fa-solid fa-list icon-inside"></i><input class="form-input" id="npsAccNumber" placeholder="ເລກບັນຊີ..."><span class="float-label lao">ເລກບັນຊີ</span></div>
+              <div class="input-detail" style="grid-column:1/3;"><i class="fa-regular fa-circle-user icon-inside"></i><input class="form-input" id="npsAccName" placeholder="ຊື່ບັນຊີ..."><span class="float-label lao">ຊື່ບັນຊີ</span></div>
             </div>
+          </div>
+
+          <label class="nps-toggle"><input type="checkbox" onchange="document.getElementById('cheque-sub-body').classList.toggle('open', this.checked); rebuildDenomRows();"><span class="lao">ໂອນແຊັກ (ຈ່າຍດ້ວຍແຊັກ)</span></label>
+          <div class="nps-body" id="cheque-sub-body">
+            <div class="section-title lao" style="margin-top:14px;">ແຊັກ</div>
+            <div class="field-grid">
+              <div class="input-detail"><i class="fa-solid fa-hashtag icon-inside"></i><input class="form-input" id="chequeNo" placeholder="ເລກທີແຊັກ..."><span class="float-label lao">ເລກທີແຊັກ</span></div>
+              <div class="input-detail"><i class="fa-regular fa-calendar icon-inside"></i><input class="form-input" id="chequeDate" placeholder="ວັນອອກແຊັກ..."><span class="float-label lao">ວັນອອກແຊັກ</span></div>
+            </div>
+          </div>
+
+          <div class="input-detail no-icon" id="denom-single-amount" style="display:none;margin-top:10px;">
+            <input class="form-input" id="singleAmount" inputmode="decimal" placeholder="0.00" oninput="fmtMoneyInput(this, recompute)">
+            <span class="float-label lao">ຍອດໂອນ</span>
           </div>
 
           <div class="txn-row">
@@ -663,7 +780,7 @@ footer b{color:var(--bp-gold);}
 
       <!-- ============ RIGHT: AMOUNT PANEL ============ -->
       <div class="bill-amount">
-        <div class="section-title lao">ແຍກປະເພດທະນະບັດ</div>
+        <div class="section-title lao" id="amountPanelTitle">ແຍກປະເພດທະນະບັດ</div>
         <div id="denom-rows"></div>
         <div class="total-block">
           <div class="total-number"><span class="lao">ລວມ</span><span id="totalNumber">0.00</span></div>
@@ -672,6 +789,12 @@ footer b{color:var(--bp-gold);}
         
       </div>
     </div>
+
+    <div class="bill-toolbar">
+      <button class="tbtn" onclick="openPreview(false)"><i class="fa-solid fa-eye"></i> Preview <span class="sub">ເບິ່ງຕົວຢ່າງກ່ອນພິມ</span></button>
+      <button class="tbtn" onclick="openPreview(true)"><i class="fa-solid fa-up-down-left-right"></i> ປັບຕຳແໜ່ງພິມ <span class="sub">Edit / calibrate</span></button>
+    </div>
+
   </div>
 
 
@@ -689,16 +812,72 @@ footer b{color:var(--bp-gold);}
 
 <div class="print-only">
 
-  <!-- เป๊ะตาม Excel: sheet ໃບມອບ, print area A1:K16 -->
+  <!-- เป๊ะตาม Excel: sheet ໃບມອບ, print area A1:K18 -->
   <div class="print-page" id="printPage-deposit">
-    <div class="grid-deposit" id="gridDeposit"></div>
+    <div class="origin" id="depositOrigin"></div>
   </div>
 
-  <!-- fallback แบบ list สำหรับ withdraw/transfer -->
-  <div class="print-page" id="printPage-fallback">
-    <div class="print-fallback" id="fallbackBody"></div>
+  <!-- เป๊ะตาม Excel: sheet ໃບມອບເກົ່າ, print area A1:K16 -->
+  <div class="print-page" id="printPage-deposit_old">
+    <div class="origin" id="oldDepositOrigin"></div>
   </div>
 
+  <!-- เป๊ะตาม Excel: sheet ໃບຖອນ, print area A1:J18 -->
+  <div class="print-page" id="printPage-withdraw">
+    <div class="origin" id="withdrawOrigin"></div>
+  </div>
+
+  <!-- เป๊ะตาม Excel: sheet ໃບໂອນ, print area A1:L19 -->
+  <div class="print-page" id="printPage-transfer">
+    <div class="origin" id="transferOrigin"></div>
+  </div>
+
+</div>
+
+<!-- ===== Preview overlay (เห็นบนจอ) ===== -->
+<div class="preview-overlay" id="previewOverlay">
+  <div class="preview-head">
+    <span class="preview-title" id="previewTitle"><i class="fa-solid fa-eye"></i> ຕົວຢ່າງກ່ອນພິມ</span>
+    <span class="preview-spacer"></span>
+    <button class="calib-btn primary" onclick="printFromPreview()"><i class="fa-solid fa-print"></i> ພິມ</button>
+    <button class="calib-btn" onclick="closePreview()">✕ ປິດ</button>
+  </div>
+  <div class="preview-stage" id="previewStage"></div>
+</div>
+
+<!-- ===== Calibration control bar ===== -->
+<div class="calib-bar" id="calibBar">
+  <div class="calib-group">
+    <span class="lbl">ກຳລັງປັບ:</span>
+    <span class="calib-target" id="calibTarget">Whole page</span>
+  </div>
+  <div class="calib-group">
+    <div class="pad">
+      <span class="blank"></span>
+      <button onclick="nudge(0,-1)" title="Up">▲</button>
+      <span class="blank"></span>
+      <button onclick="nudge(-1,0)" title="Left">◀</button>
+      <button onclick="nudgeReset()" title="Reset this target" style="font-size:10px">●</button>
+      <button onclick="nudge(1,0)" title="Right">▶</button>
+      <span class="blank"></span>
+      <button onclick="nudge(0,1)" title="Down">▼</button>
+      <span class="blank"></span>
+    </div>
+  </div>
+  <div class="calib-group calib-step">
+    <span class="lbl"> step</span>
+    <select id="calibStep">
+      <option value="2.83">1 mm</option>
+      <option value="1.42">0.5 mm</option>
+      <option value="0.71">0.25 mm</option>
+      <option value="8.5">3 mm</option>
+    </select>
+  </div>
+  <div class="calib-group">
+    <button class="calib-btn" onclick="toggleGuides()" id="guideBtn">Grid</button>
+    <button class="calib-btn danger" onclick="resetCalib()">Reset</button>
+    <button class="calib-btn gold" onclick="closePreview()">Done</button>
+  </div>
 </div>
 
 <script>
@@ -1237,7 +1416,13 @@ function fmtMoneyInput(el,cb){
   const raw=el.value;
   const caret=el.selectionStart;
   const digitsBefore=raw.slice(0,caret).replace(/\D/g,'').length;
-  let v=raw.replace(/,/g,'').replace(/[^\d.]/g,'');
+  // ถ้าตัวอักษรที่พิมพ์ล่าสุด (ตรงหน้า caret) เป็น "," ให้ถือเป็นจุดทศนิยม "." แทนเสมอ
+  // (คอมมาตัวอื่นที่เหลือเป็นแค่ comma จัดรูปแบบเลขหลักพันเดิม ตัดทิ้งตามปกติด้านล่าง)
+  let working = raw;
+  if (caret>0 && raw[caret-1]===','){
+    working = raw.slice(0,caret-1)+'.'+raw.slice(caret);
+  }
+  let v=working.replace(/,/g,'').replace(/[^\d.]/g,'');
   const dot=v.indexOf('.');
   if(dot>=0) v=v.slice(0,dot+1)+v.slice(dot+1).replace(/\./g,''); // keep only first dot
   let [int,dec]=v.split('.');
@@ -1513,27 +1698,53 @@ function laoMoneyText(amount, currency) {
 }
 
 /* =========================================================
-   ระดับທະນະບັດจริง — ดึงจาก N4:N20 ของ sheet ໃບມອບ ในไฟล์ Excel
-   (ตัด/เติมตามที่จริงมีในแต่ละสะกุลเงิน)
+   ລະດັບທະນະບັດ — ตำแหน่งพิมพ์ "คงที่ตามแถวจริงใน Excel" ไม่ใช่ตามลำดับ
+   ที่ปรากฏ — เพราะ Excel ใช้ J(แถว)=O(แถว+2) คงที่เสมอ ไม่ว่าจะเป็น
+   สะกุลใด ถ้าสะกุลนั้นไม่มีระดับนี้ ช่องนั้นจะ "ว่าง" (ไม่ใช่เลื่อนขึ้นมา
+   เติมที่ช่องอื่น) — นี่คือจุดที่ user รายงานว่าตำแหน่งพิมพ์ของแต่ละ
+   สะกุลไม่ตรงกัน เพราะของเดิมใช้ array ความยาวต่างกันแบบเรียงจากบน
    ========================================================= */
-var DENOM_TIERS = {
-  LAK: [100000,50000,20000,10000,5000,2000,1000,500,200,100,50,20,10,5,2,1,0],
-  THB: [1000,500,100,50,20,10,5,2,1,0],
-  CNY: [100,50,20,10,5,1,0],
-  USD: [100,50,20,10,5,2,1,0]
+// 16 ช่อง = sheet rows 2..17 ของ ໃບມອບ — null = สะกุลนี้ไม่มีระดับนี้ (ว่าง ไม่เลื่อน)
+var DENOM_SLOTS_DEPOSIT = [
+  {LAK:100000, CNY:null, THB:null, USD:null},
+  {LAK:50000,  CNY:null, THB:null, USD:null},
+  {LAK:20000,  CNY:null, THB:null, USD:null},
+  {LAK:10000,  CNY:null, THB:null, USD:null},
+  {LAK:5000,   CNY:null, THB:null, USD:null},
+  {LAK:2000,   CNY:null, THB:null, USD:null},
+  {LAK:1000,   CNY:null, THB:1000, USD:null},
+  {LAK:500,    CNY:null, THB:500,  USD:null},
+  {LAK:200,    CNY:null, THB:null, USD:null},
+  {LAK:100,    CNY:100,  THB:100,  USD:100},
+  {LAK:50,     CNY:50,   THB:50,   USD:50},
+  {LAK:20,     CNY:20,   THB:20,   USD:20},
+  {LAK:10,     CNY:10,   THB:10,   USD:10},
+  {LAK:5,      CNY:5,    THB:5,    USD:5},
+  {LAK:2,      CNY:null, THB:2,    USD:2},
+  {LAK:1,      CNY:1,    THB:1,    USD:1}
+];
+// ใช้ร่วมกันได้ทั้ง ใบມອບເກົ່າ และ ใบຖອນ — ทุกสะกุลมีครบ 9 ระดับเสมอ (ไม่มีช่องว่าง)
+var DENOM_SLOTS_SIMPLE9 = {
+  LAK:[100000,50000,20000,10000,5000,2000,1000,500,0],
+  CNY:[100,50,20,10,5,1,0,'',''],
+  THB:[1000,500,100,50,20,10,5,1,0],
+  USD:[100,50,20,10,5,2,1,0,'']
 };
-var PRINT_DENOM_SLOTS = 15; // print area ตัดที่แถว 16 = J2:J16 = 15 ช่อง (เหมือน Excel จริง)
+var PRINT_DENOM_SLOTS = 16; // ใบມອບ: J2:J17 = 16 ช่อง (ตัดที่แถว 18 ตามพื้นที่พิมพ์จริง)
 
 /* "เนื้อใน" — ดึงจาก R-column ของแต่ละ sheet จริง */
 var DESC_OPTIONS = {
   deposit: ["ກຳໜົດເອງ","ມອບສົດເຂົ້າບັນຊີ","ເປີດບັນຊີໃໝ່","ມອບປັບຍອດ","ມອບແລກປ່ຽນ","ຄ່າທຳນຽມ","ຄ່າທຳນຽມບັດຟ້າ","ຄ່າທຳນຽມບັດຄຳ","ຄ່າທຳນຽມຖອນເງິນເກີນວົງເງິນ","ຄ່າທຳນຽມປິດບັນຊີ","ຄ່າທຳນຽມ ອອກປື້ມຫົວໃໝ່"],
+  deposit_old: ["ກຳໜົດເອງ","ມອບສົດເຂົ້າບັນຊີ","ເປີດບັນຊີໃໝ່","ມອບປັບຍອດ","ມອບແລກປ່ຽນ"],
   transfer: ["ກຳໜົດເອງ","ຄ່າທຳນຽມ","ຄ່າທຳນຽມ ATMN ບັດຟ້າ","ຄ່າທຳນຽມ ATMN ບັດຄຳ","ຄ່າທຳນຽມ ATML ບັດຟ້າ","ຄ່າທຳນຽມ ATML ບັດຄຳ","ຄ່າທຳນຽມອອກລະຫັດໃຫມ່"]
 };
-["deposit","transfer"].forEach(function(type){
+["deposit","deposit_old","transfer"].forEach(function(type){
   var sel = document.getElementById("descSelect-"+type);
+  if(!sel) return;
   DESC_OPTIONS[type].forEach(function(opt){
     var o = document.createElement("option"); o.value = opt; o.textContent = opt; sel.appendChild(o);
   });
+  onDescChange(sel, type); // sync ช่องกำหนดเองตั้งแต่ตอนเปิดหน้าแรก (ไม่ต้องรอ user สลับตัวเลือกก่อน)
 });
 function onDescChange(sel, type){
   var custom = sel.value === "ກຳໜົດເອງ";
@@ -1542,7 +1753,7 @@ function onDescChange(sel, type){
 function getDescValue(type){
   var sel = document.getElementById("descSelect-"+type);
   if (!sel) return (document.getElementById("desc-"+type) || {}).value || "";
-  if (sel.value === "ກຳໜົດເອງ") return document.getElementById("descCustom-"+type).value || "ກຳໜົດເອງ";
+  if (sel.value === "ກຳໜົດເອງ") return document.getElementById("descCustom-"+type).value || "";
   return sel.value;
 }
 
@@ -1621,13 +1832,13 @@ function searchCustomer(btn){
         if (rows && rows.length){
           var r0 = rows[0];
           var hit = { CONTRACT:r0.contract, CURRENCY:r0.currency, CUSTOMER:r0.customer, TEL:r0.tel, ACCNAME:r0.accname, Addr:r0.addr };
-          applyHit(block, hit, statusEl, "Supabase");
+          applyHit(block, hit, statusEl, "data");
         } else {
-          statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນໃນ Supabase"; statusEl.className = "search-status err";
+          statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນ"; statusEl.className = "search-status err";
         }
       })
       .catch(function(err){
-        statusEl.textContent = "✗ ເຊື່ອມຕໍ່ Supabase ບໍ່ໄດ້ (" + err.message + ")"; statusEl.className = "search-status err";
+        statusEl.textContent = "✗ ເຊື່ອມຕໍ່ຂໍ້ມູນບໍ່ໄດ້ (" + err.message + ")"; statusEl.className = "search-status err";
       });
     return;
   }
@@ -1639,7 +1850,7 @@ function searchCustomer(btn){
         if (rows && rows.length){
           var r0 = rows[0];
           var hit = { CONTRACT:r0.c, CURRENCY:r0.cur, CUSTOMER:r0.n, TEL:r0.t, ACCNAME:r0.a, Addr:r0.b };
-          applyHit(block, hit, statusEl, "Sheets");
+          applyHit(block, hit, statusEl, "data");
         } else {
           statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນໃນ Google Sheets"; statusEl.className = "search-status err";
         }
@@ -1669,34 +1880,90 @@ function switchType(type){
 }
 
 /* =========================================================
-   Denomination panel — สร้างใหม่ทุกครั้งที่สะกุลเงินของแถบที่
-   active เปลี่ยน เพราะแต่ละสะกุลเงินมีระดับທະນະບັดต่างกันจริง
+   Denomination panel — สลับรูปแบบตามแท็บที่ active จริง
    ========================================================= */
+function getActivePanelId(){
+  var p = document.querySelector(".panel.active");
+  return p ? p.id.replace("panel-","") : "deposit";
+}
 function getActivePrimaryCurrencySelect(){
   var activePanel = document.querySelector(".panel.active");
   if(!activePanel) return null;
   var block = activePanel.querySelector('.account-block[data-role="to"]') || activePanel.querySelector('.account-block');
   return block ? block.querySelector('[data-field="CURRENCY"]') : null;
 }
+function getDenomMode(){
+  var id = getActivePanelId();
+  if (id === "deposit") return "fixed16";
+  if (id === "deposit_old" || id === "withdraw") return "simple9";
+  return "none"; // transfer — ไม่มีช่องแยกธนบัตรในฟอร์มจริง
+}
 function onCurrencyChange(sel){ rebuildDenomRows(); recompute(); }
 
 function rebuildDenomRows(){
+  var wrap = document.getElementById("denom-rows");
+  var amtWrap = document.getElementById("denom-single-amount");
+  var mode = getDenomMode();
   var sel = getActivePrimaryCurrencySelect();
   var cur = sel ? sel.value : "LAK";
-  var tiers = DENOM_TIERS[cur] || DENOM_TIERS.LAK;
-  var wrap = document.getElementById("denom-rows");
+
+  var titleEl = document.getElementById("amountPanelTitle");
+  if (mode === "none"){
+    wrap.style.display = "none";
+    if (amtWrap) amtWrap.style.display = "block";
+    if (titleEl) titleEl.textContent = "ຍອດໂອນ";
+    return;
+  }
+  wrap.style.display = "";
+  if (amtWrap) amtWrap.style.display = "none";
+  if (titleEl) titleEl.textContent = "ແຍກປະເພດທະນະບັດ";
   wrap.innerHTML = "";
-  tiers.forEach(function(v, i){
-    var row = document.createElement("div");
-    row.className = "amount-row";
-    var label = v.toLocaleString() + (i === tiers.length-1 ? " (ເສດ)" : "");
-    row.innerHTML = '<div class="denom">' + label + ':</div>' +
-                    '<div><input type="text" inputmode="numeric" data-tier="'+v+'" data-idx="'+i+'" placeholder="0"></div>';
-    wrap.appendChild(row);
-  });
-  wrap.querySelectorAll("input").forEach(function(inp){
+
+// ช่องที่ไม่ได้ใช้งานจริง — ซ่อนออกจากหน้าจอ (ตำแหน่งพิมพ์ยังคงเดิม ถ้าไม่มีค่าก็พิมพ์ "-" เหมือนเดิม)
+var UI_HIDDEN_SLOTS = { LAK: [8,9,10,11,12,13,14,15] }; // 200,100,50,20,10,5,2,1 — ບໍ່ໃຊ້ງານ
+
+  if (mode === "fixed16"){
+    var hidden = UI_HIDDEN_SLOTS[cur] || [];
+    DENOM_SLOTS_DEPOSIT.forEach(function(slot, i){
+      var v = slot[cur];
+      if (v === null) return; // สกุลนี้ไม่มีระดับนี้ — ไม่ต้องโชว์ช่องกรอกเลย (ตำแหน่งพิมพ์ยังคงเดิมเพราะอ้างจาก data-slot)
+      if (hidden.indexOf(i) >= 0) return; // ไม่ได้ใช้งานจริง — ซ่อนออกจากหน้าจอ
+      var row = document.createElement("div");
+      row.className = "amount-row";
+      row.innerHTML = '<div class="denom">' + v.toLocaleString() + ':</div>' +
+        '<div><input type="text" inputmode="numeric" data-slot="'+i+'" placeholder="0"></div>';
+      wrap.appendChild(row);
+    });
+    // ช่องเศษ — ตรงกับ N20/O20 ของ Excel จริง (แถวนี้อยู่นอกพื้นที่พิมพ์ J2:J17 จึง
+    // ไม่ขึ้นเป็นแถวแยกบนใบบิล แต่ค่าที่กรอกจะถูกบวกเข้ายอดรวมเสมอ — ตรงกับสูตร
+    // J18=SUM(J2:J17,H28) ที่ H28=O20 — ใช้สำหรับยอดที่มีทศนิยม เช่น USD 0.50)
+    var remRow = document.createElement("div");
+    remRow.className = "amount-row";
+    remRow.innerHTML = '<div class="denom">ເສດ (.xx):</div>' +
+      '<div><input type="text" inputmode="decimal" id="remainderInput" placeholder="0.00" oninput="fmtMoneyInput(this, recompute)"></div>';
+    wrap.appendChild(remRow);
+  } else { // simple9
+    var tiers = DENOM_SLOTS_SIMPLE9[cur] || DENOM_SLOTS_SIMPLE9.LAK;
+    tiers.forEach(function(v, i){
+      var blank = (v === '' || v === null);
+      if (blank) return; // สกุลนี้ไม่มีระดับนี้ — ไม่ต้องโชว์ช่องกรอกเลย
+      var isRemainder = (v === 0); // ช่อง "0" = เศษ/ทศนิยม — ต้องรับจุดทศนิยมได้ (เช่น USD 0.50)
+      var row = document.createElement("div");
+      row.className = "amount-row";
+      if (isRemainder){
+        row.innerHTML = '<div class="denom">0:</div>' +
+          '<div><input type="text" inputmode="decimal" data-slot="'+i+'" placeholder="0.00" oninput="fmtMoneyInput(this, recompute)"></div>';
+      } else {
+        row.innerHTML = '<div class="denom">' + Number(v).toLocaleString() + ':</div>' +
+          '<div><input type="text" inputmode="numeric" data-slot="'+i+'" placeholder="0"></div>';
+      }
+      wrap.appendChild(row);
+    });
+  }
+
+  wrap.querySelectorAll("input[data-slot]").forEach(function(inp){
+    if (inp.hasAttribute("oninput")) return; // ช่องที่รับทศนิยม จัดการด้วย fmtMoneyInput ของตัวเองแล้ว
     inp.addEventListener("input", function(){
-      // ใส่ comma คั่นหลักพันให้อ่านง่าย โดยคงตำแหน่ง cursor ไว้ที่เดิม
       var raw = inp.value.replace(/[^0-9]/g, "");
       var cursorFromEnd = inp.value.length - inp.selectionStart;
       inp.value = raw ? Number(raw).toLocaleString() : "";
@@ -1710,13 +1977,25 @@ function rebuildDenomRows(){
 function getDenomSubtotals(){
   var sel = getActivePrimaryCurrencySelect();
   var cur = sel ? sel.value : "LAK";
-  var inputs = document.querySelectorAll('#denom-rows [data-tier]');
-  var subtotals = [];
+  var mode = getDenomMode();
+  if (mode === "none"){
+    var amtInp = document.getElementById("singleAmount");
+    var v = amtInp ? parseFloat((amtInp.value||"0").replace(/,/g,"")) || 0 : 0;
+    return { cur: cur, subtotals: [v], bySlot: {0:v} };
+  }
+  var inputs = document.querySelectorAll('#denom-rows [data-slot]');
+  var subtotals = [], bySlot = {};
   inputs.forEach(function(inp){
-    // กรอกยอดเงินตรงๆ ต่อช่อง ไม่ต้องคูณกับมูลค่าแบงค์ (ตรงกับวิธีกรอกใน Excel จริง)
-    subtotals.push(parseFloat((inp.value || "0").replace(/,/g,"")) || 0);
+    var idx = parseInt(inp.getAttribute("data-slot"),10);
+    var val = parseFloat((inp.value || "0").replace(/,/g,"")) || 0;
+    subtotals.push(val);
+    bySlot[idx] = val;
   });
-  return { cur: cur, subtotals: subtotals };
+  // ช่องเศษ (ໃບມອບໃໝ່ เท่านั้น) — บวกเข้ายอดรวม แต่ไม่ใส่ใน bySlot เพราะไม่พิมพ์เป็นแถวแยก
+  var remEl = document.getElementById('remainderInput');
+  var remainder = remEl ? (parseFloat((remEl.value||"0").replace(/,/g,"")) || 0) : 0;
+  if (remainder) subtotals.push(remainder);
+  return { cur: cur, subtotals: subtotals, bySlot: bySlot, remainder: remainder };
 }
 
 function recompute(){
@@ -1737,7 +2016,135 @@ function fieldVal(block, name){
 }
 function fmtAmount(n){
   if (!n || n === 0) return "-";
-  return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  var hasFraction = Math.abs(n % 1) > 1e-9; // กันพลาดจาก floating point เช่น 0.1+0.2
+  return hasFraction
+    ? n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})
+    : n.toLocaleString(undefined,{maximumFractionDigits:0});
+}
+
+/* =========================================================
+   ระบบพิกัดพิมพ์ — absolute ต่อช่อง (ปรับทีละช่องได้)
+   คำนวณจาก row height / column width จริงในไฟล์ Bill_TEST.xlsx
+   ========================================================= */
+
+// ---------- ໃບມອບ (ใหม่) ----------
+var BASE_POS = {
+  customer: {x:0.00,   y:26.25,  w:284.21, h:23.25, va:'flex-end'},
+  tel:      {x:317.74, y:26.25,  w:88.91,  h:23.25, va:'flex-end'},
+  addr:     {x:0.00,   y:49.50,  w:205.51, h:24.75, va:'flex-end'},
+  accname:  {x:109.31, y:110.25, w:297.33, h:33.00, va:'flex-end'},
+  contract: {x:109.31, y:143.25, w:297.33, h:35.25, va:'center'},
+  cur:      {x:0.00,   y:178.50, w:109.31, h:18.75, va:'flex-start'},
+  amount:   {x:109.31, y:178.50, w:208.42, h:18.75, va:'flex-start'},
+  curword:  {x:317.74, y:178.50, w:88.91,  h:18.75, va:'flex-start'},
+  words:    {x:0.00,   y:197.25, w:406.64, h:18.75, va:'flex-end', wrap:true},
+  desc:     {x:109.31, y:216.00, w:297.33, h:18.75, va:'flex-start'}
+};
+var DENOM_BASE = { x:446.0, w:84.53 };
+// J2..J17 = sheet rows 2..17 — ตำแหน่งคงที่ ไม่ขึ้นกับสะกุลเงิน
+var DENOM_ROW_TOPS = [26.25,49.5,74.25,91.5,110.25,125.25,143.25,159.75,178.5,197.25,216.0,234.75,253.5,272.25,291.0,309.75,329.25];
+var DENOM_ROW_H    = [23.25,24.75,17.25,18.75,15.0,18.0,16.5,18.75,18.75,18.75,18.75,18.75,18.75,18.75,18.75,19.5,19.5];
+
+// ---------- ໃບມອບເກົ່າ ----------
+var BASE_POS_OLD = {
+  customer: {x:0.00,   y:26.25,  w:284.21, h:19.50, va:'flex-end'},
+  tel:      {x:317.74, y:26.25,  w:89.64,  h:19.50, va:'flex-end'},
+  addr:     {x:0.00,   y:45.75,  w:205.51, h:21.00, va:'flex-end'},
+  accname:  {x:109.31, y:102.75, w:298.06, h:33.00, va:'flex-end'},
+  contract: {x:165.43, y:135.75, w:152.31, h:34.50, va:'center'},
+  cur:      {x:0.00,   y:170.25, w:109.31, h:18.75, va:'flex-start'},
+  amount:   {x:165.43, y:170.25, w:152.31, h:18.75, va:'flex-start'},
+  curword:  {x:317.74, y:170.25, w:89.64,  h:18.75, va:'flex-end'},
+  words:    {x:0.00,   y:189.00, w:407.37, h:20.25, va:'flex-end', wrap:true},
+  desc:     {x:109.31, y:209.25, w:298.06, h:39.00, va:'center'},
+  total:    {x:452.55, y:209.25, w:84.54,  h:39.00, va:'center'},
+  symbol:   {x:537.09, y:209.25, w:29.15,  h:39.00, va:'center'}
+};
+var DENOM_BASE_OLD_LABEL = { x:407.37, w:45.18 };
+var DENOM_BASE_OLD = { x:452.55, w:84.54 };
+var DENOM_ROW_TOPS_OLD = [26.25,45.75,66.75,84.0,102.75,117.75,135.75,152.25,170.25];
+var DENOM_ROW_H_OLD    = [19.5,21.0,17.25,18.75,15.0,18.0,16.5,18.0,18.75];
+
+// ---------- ໃບຖອນ ----------
+var BASE_POS_WD = {
+  accname:  {x:75.79, y:23.25,  w:281.30, h:16.50, va:'center'},
+  addr1:    {x:0.00,  y:39.75,  w:176.36, h:15.00, va:'flex-start'},
+  tel:      {x:75.79, y:54.75,  w:150.85, h:21.00, va:'flex-start'},
+  customer: {x:75.79, y:75.75,  w:281.30, h:18.75, va:'center'},
+  addr2:    {x:0.00,  y:94.50,  w:176.36, h:15.75, va:'flex-start'},
+  contract: {x:75.79, y:110.25, w:150.85, h:19.15, va:'flex-end'},
+  cur:      {x:0.00,  y:129.40, w:75.79,  h:21.75, va:'flex-end'},
+  amount:   {x:126.07,y:129.40, w:100.57, h:21.75, va:'flex-start'},
+  curword:  {x:226.64,y:129.40, w:130.45, h:21.75, va:'flex-start'},
+  words:    {x:75.79, y:151.15, w:281.30, h:23.25, va:'flex-end', wrap:true}
+};
+var DENOM_BASE_WD_LABEL = { x:339.09, w:53.92 };
+var DENOM_BASE_WD = { x:393.01, w:86.0 };
+var DENOM_ROW_TOPS_WD = [39.75,54.75,75.75,94.5,110.25,129.4,151.15,174.4,193.15];
+var DENOM_ROW_H_WD    = [15.0,21.0,18.75,15.75,19.15,21.75,23.25,18.75,18.75];
+
+// ---------- ໃບໂອນ ----------
+var BASE_POS_TR = {
+  from_customer:{x:105.67, y:25.50,  w:249.23, h:21.75, va:'flex-end'},
+  from_tel:     {x:423.40, y:25.50,  w:115.14, h:21.75, va:'flex-end'},
+  from_addr:    {x:58.30,  y:47.25,  w:47.37,  h:21.00, va:'flex-end'},
+  nps_accname:  {x:310.45, y:68.25,  w:228.10, h:43.50, va:'center'},
+  cheque_no:    {x:105.67, y:111.75, w:145.75, h:19.50, va:'flex-end'},
+  nps_accnum:   {x:354.90, y:111.75, w:183.64, h:19.50, va:'flex-end'},
+  cheque_date:  {x:105.67, y:131.25, w:145.75, h:15.75, va:'flex-end'},
+  nps_bank:     {x:310.45, y:131.25, w:228.10, h:15.75, va:'flex-end'},
+  from_accname: {x:0.00,   y:172.50, w:251.42, h:26.25, va:'flex-end'},
+  to_accname:   {x:310.45, y:172.50, w:228.10, h:26.25, va:'flex-end'},
+  from_contract:{x:0.00,   y:198.75, w:217.90, h:24.75, va:'flex-end'},
+  to_contract:  {x:310.45, y:198.75, w:165.43, h:24.75, va:'flex-end'},
+  cur:          {x:58.30,  y:223.50, w:47.37,  h:21.75, va:'flex-end'},
+  amount:       {x:169.80, y:223.50, w:140.65, h:21.75, va:'flex-start'},
+  curword:      {x:310.45, y:223.50, w:44.45,  h:21.75, va:'flex-start'},
+  words:        {x:105.67, y:246.00, w:249.23, h:19.50, va:'flex-end', wrap:true},
+  desc:         {x:105.67, y:265.50, w:249.23, h:19.50, va:'center'}
+};
+
+var FIELD_LABELS = {
+  page:'Whole page', customer:'Customer name', tel:'Phone', addr:'Address', addr1:'Address', addr2:'Address (2)',
+  accname:'Account name', contract:'Account no.', cur:'Currency', amount:'Amount', curword:'Currency unit',
+  words:'Amount in words', desc:'Description', denom:'Denomination column', total:'Total', symbol:'Currency symbol',
+  from_customer:'Name (sender)', from_tel:'Phone (sender)', from_addr:'Address (sender)',
+  from_accname:'Account name (sender)', from_contract:'Account no. (sender)',
+  to_accname:'Account name (receiver)', to_contract:'Account no. (receiver)',
+  nps_accname:'NPS account name', nps_accnum:'NPS account no.', nps_bank:'NPS bank',
+  cheque_no:'Cheque no.', cheque_date:'Cheque date'
+};
+
+var STORE_KEY = 'ezteller_print_calib_v2';
+var PAGE_OFFSET = {};   // {deposit:{x,y}, deposit_old:{x,y}, withdraw:{x,y}, transfer:{x,y}}
+var FIELD_OFFSETS = {}; // {deposit:{customer:{x,y},...}, ...}
+var PRINT_TYPES = ['deposit','deposit_old','withdraw','transfer'];
+
+function loadCalib(){
+  PAGE_OFFSET = {}; FIELD_OFFSETS = {};
+  PRINT_TYPES.forEach(function(t){ PAGE_OFFSET[t]={x:0,y:0}; FIELD_OFFSETS[t]={}; });
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      var o = JSON.parse(raw);
+      PRINT_TYPES.forEach(function(t){
+        if(o.pages && o.pages[t]) PAGE_OFFSET[t] = o.pages[t];
+        if(o.fields && o.fields[t]) FIELD_OFFSETS[t] = o.fields[t];
+      });
+    }
+  }catch(e){ /* localStorage ใช้ไม่ได้ในบางที่ — ไม่เป็นไร ใช้ค่าเริ่มต้น */ }
+}
+function saveCalib(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({pages:PAGE_OFFSET, fields:FIELD_OFFSETS})); }
+  catch(e){ /* เงียบไว้ ถ้าเซฟไม่ได้ก็ยังใช้งานต่อได้แค่ไม่จำ */ }
+}
+function fieldOff(name){ var t = CALIB_TYPE; return (FIELD_OFFSETS[t] && FIELD_OFFSETS[t][name]) || {x:0,y:0}; }
+
+function applyPageOffset(){
+  var t = CALIB_TYPE;
+  var po = PAGE_OFFSET[t] || {x:0,y:0};
+  document.documentElement.style.setProperty('--print-offset-x', po.x + 'pt');
+  document.documentElement.style.setProperty('--print-offset-y', po.y + 'pt');
 }
 
 function buildDepositGrid(){
@@ -1755,70 +2162,325 @@ function buildDepositGrid(){
   var words = total > 0 ? laoMoneyText(total, cur) : "";
   var desc = getDescValue("deposit");
 
+  var values = {
+    customer:esc(customer), tel:esc(tel), addr:esc(addr), accname:esc(accname),
+    contract:esc(contract), cur:esc(cur), amount:fmtAmount(total),
+    curword:esc(curWord), words:esc(words), desc:esc(desc)
+  };
+
+  applyPageOffset();
+  var origin = document.getElementById("depositOrigin");
   var html = "";
-  html += '<div class="gcell h-center v-bottom gf-customer">'+esc(customer)+'</div>';
-  html += '<div class="gcell h-center v-bottom gf-tel">'+esc(tel)+'</div>';
-  html += '<div class="gcell h-center v-bottom gf-addr">'+esc(addr)+'</div>';
-  html += '<div class="gcell h-center v-center gf-accname">'+esc(accname)+'</div>';
-  html += '<div class="gcell h-center v-center gf-contract">'+esc(contract)+'</div>';
-  html += '<div class="gcell h-center v-top gf-cur">'+esc(cur)+'</div>';
-  html += '<div class="gcell h-center v-top gf-amount">'+fmtAmount(total)+'</div>';
-  html += '<div class="gcell h-center v-bottom gf-curword">'+esc(curWord)+'</div>';
-  html += '<div class="gcell h-center v-bottom gf-words">'+esc(words)+'</div>';
-  html += '<div class="gcell h-center v-bottom gf-desc">'+esc(desc)+'</div>';
-
+  Object.keys(BASE_POS).forEach(function(name){
+    var p = BASE_POS[name], o = fieldOff(name);
+    var va = p.va==='center' ? '' : (p.va==='flex-start' ? 'v-top' : 'v-bottom');
+    var wrapc = p.wrap ? ' wrap-text' : '';
+    html += '<div class="pf '+va+wrapc+'" data-field="'+name+'" style="'+
+      'left:'+(p.x+o.x)+'pt; top:'+(p.y+o.y)+'pt; width:'+p.w+'pt; height:'+p.h+'pt;">'+
+      values[name]+'</div>';
+  });
+  // denom column — ใช้ bySlot (ตำแหน่งคงที่ตาม Excel จริง ไม่เลื่อนตามสะกุลเงิน)
+  // แต่ละแถวขยับเองได้อิสระ (offset แยกต่อแถว ไม่รวมกันแล้ว)
   for (var i=0; i<PRINT_DENOM_SLOTS; i++){
-    var val = d.subtotals[i] || 0;
-    html += '<div class="gcell small h-center v-center gf-denom" style="grid-row:'+(i+2)+'/'+(i+3)+';">'+fmtAmount(val)+'</div>';
+    var val = (d.bySlot && d.bySlot[i]) || 0;
+    var odi = fieldOff('denom'+i);
+    html += '<div class="pf small" data-field="denom'+i+'" data-denomidx="'+i+'" style="'+
+      'left:'+(DENOM_BASE.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS[i]+odi.y)+'pt; '+
+      'width:'+DENOM_BASE.w+'pt; height:'+DENOM_ROW_H[i]+'pt;">'+fmtAmount(val)+'</div>';
   }
-  document.getElementById("gridDeposit").innerHTML = html;
+  // ช่อง 17 — ยอดรวมทั้งหมด รวมทศนิยม (ไม่ว่าจะสกุลเงินใด ก็ต้องไปอยู่ช่องนี้เสมอ)
+  var od16 = fieldOff('denom16');
+  html += '<div class="pf small" data-field="denom16" data-denomidx="16" style="'+
+    'left:'+(DENOM_BASE.x+od16.x)+'pt; top:'+(DENOM_ROW_TOPS[16]+od16.y)+'pt; '+
+    'width:'+DENOM_BASE.w+'pt; height:'+DENOM_ROW_H[16]+'pt;">'+fmtAmount(total)+'</div>';
+  origin.innerHTML = html;
 }
 
-function buildFallback(type){
-  var panel = document.getElementById("panel-"+type);
-  var titles = { withdraw:"ໃບຖອນ — Withdraw Slip", transfer:"ໃບໂອນ — Transfer Slip" };
-  var rows = "";
-  if (type === "transfer"){
-    var fromB = panel.querySelector('.account-block[data-role="from"]');
-    var toB = panel.querySelector('.account-block[data-role="to"]');
-    rows += "<dt>ບັນຊີເບື້ອງໜີ້</dt><dd>"+esc(fieldVal(fromB,"CONTRACT"))+" — "+esc(fieldVal(fromB,"CUSTOMER"))+"</dd>";
-    rows += "<dt>ບັນຊີເບື້ອງມີ</dt><dd>"+esc(fieldVal(toB,"CONTRACT"))+" — "+esc(fieldVal(toB,"CUSTOMER"))+"</dd>";
-    var cur = fieldVal(toB,"CURRENCY")||"LAK";
-    var d = getDenomSubtotals(); var total = d.subtotals.reduce(function(a,b){return a+b;},0);
-    rows += "<dt>ສະກຸນເງິນ</dt><dd>"+esc(cur)+"</dd>";
-    rows += "<dt>ເນື້ອໃນ</dt><dd>"+esc(getDescValue("transfer"))+"</dd>";
-    document.getElementById("fallbackBody").innerHTML =
-      "<h2 class='lao'>"+titles[type]+"</h2><dl>"+rows+"</dl>" +
-      "<div class='pf-total'><b>"+fmtAmount(total)+" "+esc(cur)+"</b><br>"+esc(total>0?laoMoneyText(total,cur):"—")+"</div>";
-    return;
-  }
-  var block = panel.querySelector(".account-block");
-  var cur = fieldVal(block,"CURRENCY")||"LAK";
-  var d = getDenomSubtotals(); var total = d.subtotals.reduce(function(a,b){return a+b;},0);
-  rows += "<dt>ເລກບັນຊີ</dt><dd>"+esc(fieldVal(block,"CONTRACT"))+"</dd>";
-  rows += "<dt>ຊື່ບັນຊີ</dt><dd>"+esc(fieldVal(block,"CUSTOMER"))+"</dd>";
-  rows += "<dt>ສະກຸນເງິນ</dt><dd>"+esc(cur)+"</dd>";
-  document.getElementById("fallbackBody").innerHTML =
-    "<h2 class='lao'>"+titles[type]+"</h2><dl>"+rows+"</dl>" +
-    "<div class='pf-total'><b>"+fmtAmount(total)+" "+esc(cur)+"</b><br>"+esc(total>0?laoMoneyText(total,cur):"—")+"</div>";
+function renderFieldsToOrigin(originId, posTable, values){
+  applyPageOffset();
+  var origin = document.getElementById(originId);
+  var html = "";
+  Object.keys(posTable).forEach(function(name){
+    var p = posTable[name], o = fieldOff(name);
+    var va = p.va==='center' ? '' : (p.va==='flex-start' ? 'v-top' : 'v-bottom');
+    var wrapc = p.wrap ? ' wrap-text' : '';
+    html += '<div class="pf '+va+wrapc+'" data-field="'+name+'" style="'+
+      'left:'+(p.x+o.x)+'pt; top:'+(p.y+o.y)+'pt; width:'+p.w+'pt; height:'+p.h+'pt;">'+
+      (values[name]==null?'':values[name])+'</div>';
+  });
+  origin.innerHTML = html;
+  return origin;
 }
+
+function buildOldDepositGrid(){
+  var panel = document.getElementById("panel-deposit_old");
+  var block = panel.querySelector(".account-block");
+  var customer = fieldVal(block,"CUSTOMER");
+  var tel = fieldVal(block,"TEL");
+  var addr = fieldVal(block,"Addr");
+  var accname = fieldVal(block,"ACCNAME") || customer;
+  var contract = fieldVal(block,"CONTRACT");
+  var cur = fieldVal(block,"CURRENCY") || "LAK";
+  var d = getDenomSubtotals();
+  var total = d.subtotals.reduce(function(a,b){return a+b;},0);
+  var curWord = (CURRENCY_WORDS[cur]||CURRENCY_WORDS.LAK).main;
+  var words = total > 0 ? laoMoneyText(total, cur) : "";
+  var desc = getDescValue("deposit_old");
+
+  var values = {
+    customer:esc(customer), tel:esc(tel), addr:esc(addr), accname:esc(accname),
+    contract:esc(contract), cur:esc(cur), amount:fmtAmount(total),
+    curword:esc(curWord), words:esc(words), desc:esc(desc),
+    total:fmtAmount(total), symbol:esc(CURRENCY_SYMBOL[cur]||"")
+  };
+  var origin = renderFieldsToOrigin('oldDepositOrigin', BASE_POS_OLD, values);
+
+  var tiers = DENOM_SLOTS_SIMPLE9[cur] || DENOM_SLOTS_SIMPLE9.LAK;
+  var html = origin.innerHTML;
+  for (var i=0; i<tiers.length; i++){
+    if (tiers[i] === '' ) continue; // ช่องที่สะกุลนี้ไม่มี ไม่ต้องพิมพ์ label/value
+    var val = (d.bySlot && d.bySlot[i]) || 0;
+    var lbl = (tiers[i] === 0) ? '' : Number(tiers[i]).toLocaleString();
+    var odi = fieldOff('denom'+i);
+    html += '<div class="pf small" style="left:'+(DENOM_BASE_OLD_LABEL.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_OLD[i]+odi.y)+'pt; width:'+DENOM_BASE_OLD_LABEL.w+'pt; height:'+DENOM_ROW_H_OLD[i]+'pt; justify-content:flex-end;">'+lbl+'</div>';
+    html += '<div class="pf small" data-field="denom'+i+'" data-denomidx="'+i+'" style="left:'+(DENOM_BASE_OLD.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_OLD[i]+odi.y)+'pt; width:'+DENOM_BASE_OLD.w+'pt; height:'+DENOM_ROW_H_OLD[i]+'pt;">'+fmtAmount(val)+'</div>';
+  }
+  origin.innerHTML = html;
+}
+
+function buildWithdrawGrid(){
+  var panel = document.getElementById("panel-withdraw");
+  var block = panel.querySelector(".account-block");
+  var customer = fieldVal(block,"CUSTOMER");
+  var tel = fieldVal(block,"TEL");
+  var addr = fieldVal(block,"Addr");
+  var accname = (document.getElementById('withdrawerName')||{}).value || fieldVal(block,"ACCNAME") || customer;
+  var contract = fieldVal(block,"CONTRACT");
+  var cur = fieldVal(block,"CURRENCY") || "LAK";
+  var d = getDenomSubtotals();
+  var total = d.subtotals.reduce(function(a,b){return a+b;},0);
+  var curWord = (CURRENCY_WORDS[cur]||CURRENCY_WORDS.LAK).main;
+  var words = total > 0 ? laoMoneyText(total, cur) : "";
+
+  var values = {
+    accname:esc(accname), addr1:esc(addr), tel:esc(tel), customer:esc(customer), addr2:esc(addr),
+    contract:esc(contract), cur:esc(cur), amount:fmtAmount(total), curword:esc(curWord), words:esc(words)
+  };
+  var origin = renderFieldsToOrigin('withdrawOrigin', BASE_POS_WD, values);
+
+  var tiers = DENOM_SLOTS_SIMPLE9[cur] || DENOM_SLOTS_SIMPLE9.LAK;
+  var html = origin.innerHTML;
+  for (var i=0; i<tiers.length; i++){
+    if (tiers[i] === '') continue;
+    var val = (d.bySlot && d.bySlot[i]) || 0;
+    if (tiers[i] === 0) val = Math.floor(total); // ช่องสุดท้าย = ยอดรวมทั้งหมด (ตัดทศนิยม ไม่ปัดขึ้น)
+    var lbl = (tiers[i] === 0) ? '' : Number(tiers[i]).toLocaleString();
+    var odi = fieldOff('denom'+i);
+    html += '<div class="pf small" style="left:'+(DENOM_BASE_WD_LABEL.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[i]+odi.y)+'pt; width:'+DENOM_BASE_WD_LABEL.w+'pt; height:'+DENOM_ROW_H_WD[i]+'pt; justify-content:flex-end;">'+lbl+'</div>';
+    html += '<div class="pf small" data-field="denom'+i+'" data-denomidx="'+i+'" style="left:'+(DENOM_BASE_WD.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[i]+odi.y)+'pt; width:'+DENOM_BASE_WD.w+'pt; height:'+DENOM_ROW_H_WD[i]+'pt;">'+fmtAmount(val)+'</div>';
+  }
+  origin.innerHTML = html;
+}
+
+function buildTransferGrid(){
+  var panel = document.getElementById("panel-transfer");
+  var fromB = panel.querySelector('.account-block[data-role="from"]');
+  var toB = panel.querySelector('.account-block[data-role="to"]');
+  var cur = fieldVal(toB,"CURRENCY") || fieldVal(fromB,"CURRENCY") || "LAK";
+  var d = getDenomSubtotals();
+  var total = d.subtotals.reduce(function(a,b){return a+b;},0);
+  var curWord = (CURRENCY_WORDS[cur]||CURRENCY_WORDS.LAK).main;
+  var words = total > 0 ? laoMoneyText(total, cur) : "";
+  var npsOn = document.getElementById('nps-body').classList.contains('open');
+  var chequeOn = document.getElementById('cheque-sub-body') && document.getElementById('cheque-sub-body').classList.contains('open');
+
+  var values = {
+    from_customer: esc(document.getElementById('transferOrderer').value || fieldVal(fromB,"CUSTOMER")),
+    from_tel:      esc(fieldVal(fromB,"TEL")),
+    from_addr:     esc(fieldVal(fromB,"Addr")),
+    from_accname:  esc(fieldVal(fromB,"ACCNAME") || fieldVal(fromB,"CUSTOMER")),
+    from_contract: esc(fieldVal(fromB,"CONTRACT")),
+    to_accname:    esc(fieldVal(toB,"ACCNAME") || fieldVal(toB,"CUSTOMER")),
+    to_contract:   esc(fieldVal(toB,"CONTRACT")),
+    cur: esc(cur), amount: fmtAmount(total), curword: esc(curWord), words: esc(words),
+    desc: esc(getDescValue("transfer")),
+    nps_accname: npsOn ? esc(document.getElementById('npsAccName').value) : "",
+    nps_accnum:  npsOn ? esc(document.getElementById('npsAccNumber').value) : "",
+    nps_bank:    npsOn ? esc(document.getElementById('npsBank').value) : "",
+    cheque_no:   chequeOn ? esc(document.getElementById('chequeNo').value) : "",
+    cheque_date: chequeOn ? esc(document.getElementById('chequeDate').value) : ""
+  };
+  renderFieldsToOrigin('transferOrigin', BASE_POS_TR, values);
+}
+
+/* ===================== Preview + Calibration ===================== */
+var CALIB_MODE = false;
+var CALIB_SEL = 'page';   // 'page' | field name
+var CALIB_TYPE = 'deposit'; // ฟอร์มที่กำลัง build/preview/calibrate อยู่ตอนนี้
+var PREVIEW_SCALE = 1;
+
+var PRINT_BUILDERS = {
+  deposit: buildDepositGrid,
+  deposit_old: buildOldDepositGrid,
+  withdraw: buildWithdrawGrid,
+  transfer: buildTransferGrid
+};
+var PRINT_PAGE_IDS = {
+  deposit: 'printPage-deposit', deposit_old: 'printPage-deposit_old',
+  withdraw: 'printPage-withdraw', transfer: 'printPage-transfer'
+};
+function buildActiveGrid(type){
+  CALIB_TYPE = type;
+  (PRINT_BUILDERS[type] || buildDepositGrid)();
+}
+
+function fitPreviewScale(){
+  var stage = document.getElementById('previewStage');
+  var pageW = 8.5 * 96; // px at 96dpi
+  var avail = Math.min(window.innerWidth - 40, 820);
+  PREVIEW_SCALE = Math.min(1, avail / pageW);
+  stage.style.transform = 'scale('+PREVIEW_SCALE+')';
+  // shrink the tall page visually so it scrolls nicely
+  stage.style.width = pageW + 'px';
+}
+
+function openPreview(calib){
+  CALIB_MODE = !!calib;
+  recompute();
+  var type = getActivePanelId();
+  buildActiveGrid(type);
+  var src = document.getElementById(PRINT_PAGE_IDS[type] || 'printPage-deposit');
+  var stage = document.getElementById('previewStage');
+  stage.innerHTML = '';
+  var clone = src.cloneNode(true);
+  clone.style.display = 'block';
+  stage.appendChild(clone);
+  stage.classList.toggle('calib', CALIB_MODE);
+  fitPreviewScale();
+  document.getElementById('previewOverlay').classList.add('open');
+  document.getElementById('calibBar').style.display = CALIB_MODE ? 'flex' : 'none';
+  document.getElementById('previewTitle').innerHTML = CALIB_MODE
+    ? '<i class="fa-solid fa-up-down-left-right"></i> ປັບຕຳແໜ່ງພິມ — ກົດເລືອກຊ່ອງ ຫຼື ປັບທັງໜ້າ'
+    : '<i class="fa-solid fa-eye"></i> ຕົວຢ່າງກ່ອນພິມ';
+  if (CALIB_MODE){ selectTarget('page'); bindFieldClicks(); }
+}
+
+function printFromPreview(){
+  var type = CALIB_TYPE;
+  closePreview();
+  setTimeout(function(){ doPrint(type); }, 80);
+}
+
+function closePreview(){
+  document.getElementById('previewOverlay').classList.remove('open');
+  document.getElementById('calibBar').style.display = 'none';
+  CALIB_MODE = false;
+}
+
+function bindFieldClicks(){
+  var stage = document.getElementById('previewStage');
+  stage.querySelectorAll('.pf').forEach(function(el){
+    el.onclick = function(){ selectTarget(el.getAttribute('data-field')); };
+  });
+}
+
+function selectTarget(name){
+  CALIB_SEL = name;
+  var label = FIELD_LABELS[name];
+  if (!label){
+    var m = /^denom(\d+)$/.exec(name);
+    label = m ? ('Denom row ' + (parseInt(m[1],10)+1)) : name;
+  }
+  document.getElementById('calibTarget').textContent = label;
+  var stage = document.getElementById('previewStage');
+  stage.querySelectorAll('.pf').forEach(function(el){
+    el.classList.toggle('sel', name!=='page' && el.getAttribute('data-field')===name);
+  });
+}
+
+function refreshPreview(){
+  if(!document.getElementById('previewOverlay').classList.contains('open')) return;
+  var type = CALIB_TYPE;
+  buildActiveGrid(type);
+  var src = document.getElementById(PRINT_PAGE_IDS[type] || 'printPage-deposit');
+  var stage = document.getElementById('previewStage');
+  var sel = CALIB_SEL;
+  stage.innerHTML = '';
+  var clone = src.cloneNode(true);
+  clone.style.display = 'block';
+  stage.appendChild(clone);
+  if (CALIB_MODE){ bindFieldClicks(); selectTarget(sel); }
+}
+
+function nudge(dx, dy){
+  var step = parseFloat(document.getElementById('calibStep').value) || 2.83;
+  var ax = dx*step, ay = dy*step;
+  var t = CALIB_TYPE;
+  if (CALIB_SEL === 'page'){
+    if (!PAGE_OFFSET[t]) PAGE_OFFSET[t] = {x:0,y:0};
+    PAGE_OFFSET[t].x += ax; PAGE_OFFSET[t].y += ay;
+  } else {
+    if (!FIELD_OFFSETS[t]) FIELD_OFFSETS[t] = {};
+    var o = FIELD_OFFSETS[t][CALIB_SEL] || {x:0,y:0};
+    o.x += ax; o.y += ay;
+    FIELD_OFFSETS[t][CALIB_SEL] = o;
+  }
+  saveCalib();
+  refreshPreview();
+}
+
+function nudgeReset(){
+  // reset เฉพาะเป้าหมายที่กำลังเลือกอยู่ (เฉพาะฟอร์มที่กำลังแก้อยู่ตอนนี้)
+  var t = CALIB_TYPE;
+  if (CALIB_SEL === 'page'){ PAGE_OFFSET[t] = {x:0,y:0}; }
+  else { if (FIELD_OFFSETS[t]) delete FIELD_OFFSETS[t][CALIB_SEL]; }
+  saveCalib();
+  refreshPreview();
+}
+
+function resetCalib(){
+  if(!confirm('Reset all print positions back to default (from the Excel file)?')) return;
+  PAGE_OFFSET = {}; FIELD_OFFSETS = {};
+  PRINT_TYPES.forEach(function(t){ PAGE_OFFSET[t]={x:0,y:0}; FIELD_OFFSETS[t]={}; });
+  saveCalib();
+  selectTarget('page');
+  refreshPreview();
+}
+
+function toggleGuides(){
+  var stage = document.getElementById('previewStage');
+  stage.classList.toggle('show-guides');
+  document.getElementById('guideBtn').classList.toggle('on');
+}
+
+window.addEventListener('resize', function(){
+  if(document.getElementById('previewOverlay').classList.contains('open')) fitPreviewScale();
+});
+// คีย์ลูกศรปรับได้ตอนอยู่ในโหมด calibrate
+document.addEventListener('keydown', function(e){
+  if(!CALIB_MODE) return;
+  if(!document.getElementById('previewOverlay').classList.contains('open')) return;
+  var map={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
+  if(map[e.key]){ e.preventDefault(); nudge(map[e.key][0], map[e.key][1]); }
+  if(e.key==='Escape') closePreview();
+});
 
 function esc(s){ var d=document.createElement("div"); d.textContent = s==null?"":s; return d.innerHTML; }
 
 function doPrint(type){
   recompute();
-  document.getElementById("printPage-deposit").style.display = "none";
-  document.getElementById("printPage-fallback").style.display = "none";
-  if (type === "deposit"){
-    buildDepositGrid();
-    document.getElementById("printPage-deposit").style.display = "block";
-  } else {
-    buildFallback(type);
-    document.getElementById("printPage-fallback").style.display = "block";
-  }
+  PRINT_TYPES.forEach(function(t){
+    var el = document.getElementById(PRINT_PAGE_IDS[t]);
+    if (el) el.style.display = "none";
+  });
+  buildActiveGrid(type);
+  var pageId = PRINT_PAGE_IDS[type] || 'printPage-deposit';
+  document.getElementById(pageId).style.display = "block";
   setTimeout(function(){ window.print(); }, 30);
 }
 
+loadCalib();
+applyPageOffset();
 rebuildDenomRows();
 recompute();
 
