@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600;700&family=Noto+Serif:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
 :root{
   --bg:#0274bf;--panel:#025fa0;--panel2:#0369b0;--line:#1a85d0;
@@ -465,6 +466,7 @@ footer b{color:var(--bp-gold);}
       <button class="nav-btn" id="navAdb" onclick="showView('adb')">Average Balance<small>ADB</small></button>
       <button class="nav-btn" id="navInt" onclick="showView('int')">Deposit Interest<small>Rates &amp; calc</small></button>
       <button class="nav-btn" id="navFee" onclick="showView('fee')">Service Fees<small>Fee calc</small></button>
+      <button class="nav-btn" id="navAdmin" onclick="showView('admin')" style="display:none">Admin<small>ນຳເຂົ້າຂໍ້ມູນ</small></button>
     </nav>
   </div>
 
@@ -639,6 +641,37 @@ footer b{color:var(--bp-gold);}
 
     <div class="int-note" style="margin:0 2px">ທຸກອັດຕາອ້າງອີງຈາກໃບແຈ້ງການຄ່າທຳນຽມ LDB (SWIFT 4888 · E-BORDER 2363 · Western Union · ທົ່ວໄປ 1442) — ກະລຸນາກວດສອບກັບສາຂາ ກ່ອນເຮັດທຸລະກຳຈິງ</div>
   </div><!-- /viewFee -->
+
+  <div id="viewAdmin" style="display:none">
+    <h1>Admin <small class="lao">ນຳເຂົ້າຂໍ້ມູນລູກຄ້າ</small></h1>
+    <p class="sub">อัปโหลดไฟล์ CSV รายสัปดาห์ — เพิ่ม/อัปเดตข้อมูลลูกค้าอัตโนมัติ ไม่ต้องเข้า Supabase Dashboard</p>
+
+    <div class="card">
+      <div class="card-title">📤 อัปโหลดข้อมูลลูกค้า (data123)</div>
+
+      <div class="fld">
+        <label class="drop-zone" for="adminCsvFile">
+          <span class="icon">📄</span>
+          <b>แตะเพื่อเลือกไฟล์ CSV</b>
+          <small>หัวคอลัมน์ต้องมี: contract, currency, customer, tel, accname, addr</small>
+        </label>
+        <input type="file" id="adminCsvFile" accept=".csv" onchange="handleAdminCsvSelect(event)">
+      </div>
+
+      <div id="adminCsvPreview" style="display:none; margin-top:12px;">
+        <div class="int-note" id="adminCsvSummary" style="margin:0 0 10px"></div>
+        <button class="btn primary" id="adminUploadBtn" onclick="runAdminUpsert()">ยืนยันอัปโหลด</button>
+      </div>
+
+      <div id="adminCsvProgress" style="display:none; margin-top:12px;" class="int-note"></div>
+      <div id="adminCsvResult" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="int-note" style="margin:14px 2px 0">
+      ใส่เฉพาะรายที่ใหม่หรือมีการแก้ไขก็พอ ไม่ต้องใส่ลูกค้าทั้งหมด — ระบบจะอัปเดตเฉพาะเลขบัญชี (contract) ที่ตรงกับไฟล์เท่านั้น
+      ส่วนที่ไม่อยู่ในไฟล์จะไม่ถูกแตะต้อง เลขบัญชีไหนมีอยู่แล้วจะถูกแทนที่ด้วยข้อมูลในไฟล์ ถ้ายังไม่มีจะถูกเพิ่มใหม่
+    </div>
+  </div><!-- /viewAdmin -->
 
   <footer>Create by NANA</footer>
 </div>
@@ -1362,10 +1395,12 @@ function showView(v){
   document.getElementById('viewAdb').style.display = v==='adb' ? '' : 'none';
   document.getElementById('viewInt').style.display = v==='int' ? '' : 'none';
   document.getElementById('viewFee').style.display = v==='fee' ? '' : 'none';
+  document.getElementById('viewAdmin').style.display = v==='admin' ? '' : 'none';
   document.getElementById('viewBill').style.display = v==='bill' ? '' : 'none';
   document.getElementById('navAdb').classList.toggle('on', v==='adb');
   document.getElementById('navInt').classList.toggle('on', v==='int');
   document.getElementById('navFee').classList.toggle('on', v==='fee');
+  document.getElementById('navAdmin').classList.toggle('on', v==='admin');
   document.getElementById('navBill').classList.toggle('on', v==='bill');
 }
 
@@ -1831,6 +1866,13 @@ var EMAIL_DOMAIN = "@ezteller.local";
 var SESSION_MAX_MS = 8 * 60 * 60 * 1000; // 8 ชั่วโมง
 var LOGIN_AT_KEY = "ez_login_at";
 
+// บัญชีเดียวเท่านั้นที่มองเห็น/ใช้แท็บ Admin (นำเข้าข้อมูลลูกค้า) ได้
+// ต้องตรงกับ email ของ user ที่สร้างไว้ใน Supabase และตรงกับ RLS policy ฝั่ง database ด้วย
+var ADMIN_EMAIL = "teller@0.nana";
+function isAdmin(){
+  return !!(currentSession && currentSession.user && currentSession.user.email === ADMIN_EMAIL);
+}
+
 var sbAuth = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
@@ -1839,6 +1881,9 @@ var currentSession = null;
 function showAuthOverlay(){
   document.getElementById("authOverlay").classList.remove("hide");
   document.getElementById("userbar").style.display = "none";
+  var navAdminBtn = document.getElementById("navAdmin");
+  if (navAdminBtn) navAdminBtn.style.display = "none";
+  if (typeof showView === "function") showView("bill");
 }
 function hideAuthOverlay(session){
   currentSession = session;
@@ -1847,6 +1892,7 @@ function hideAuthOverlay(session){
   ub.style.display = "";
   var email = (session && session.user && session.user.email) || "";
   document.getElementById("userLabel").textContent = email.replace(EMAIL_DOMAIN, "");
+  document.getElementById("navAdmin").style.display = isAdmin() ? "" : "none";
 }
 
 function handleLogin(ev){
@@ -1912,6 +1958,115 @@ function initAuth(){
 function getAuthHeaders(){
   var token = (currentSession && currentSession.access_token) || SUPABASE_ANON_KEY;
   return { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + token };
+}
+
+/* =========================================================
+   ADMIN — นำเข้าข้อมูลลูกค้า (CSV upload -> upsert ตาราง data123)
+   ใช้ได้เฉพาะบัญชีที่ isAdmin() เป็น true เท่านั้น (เช็คซ้ำฝั่ง RLS ด้วย
+   ไม่ใช่พึ่งแค่การซ่อนปุ่มฝั่งหน้าเว็บ)
+   ========================================================= */
+var ADMIN_REQUIRED_COLS = ['contract','currency','customer','tel','accname','addr'];
+var ADMIN_BATCH_SIZE = 500;
+var adminParsedRows = [];
+
+function handleAdminCsvSelect(ev){
+  var file = ev.target.files && ev.target.files[0];
+  var previewBox = document.getElementById('adminCsvPreview');
+  var summaryEl = document.getElementById('adminCsvSummary');
+  var resultEl = document.getElementById('adminCsvResult');
+  resultEl.innerHTML = '';
+  previewBox.style.display = 'none';
+  adminParsedRows = [];
+  if (!file) return;
+
+  if (!isAdmin()){
+    resultEl.innerHTML = '<div class="search-status err">บัญชีนี้ไม่มีสิทธิ์อัปโหลดข้อมูล</div>';
+    return;
+  }
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: function(h){ return h.trim().toLowerCase(); },
+    complete: function(results){
+      var headers = results.meta.fields || [];
+      var missing = ADMIN_REQUIRED_COLS.filter(function(c){ return headers.indexOf(c) === -1; });
+      if (missing.length){
+        resultEl.innerHTML = '<div class="search-status err">หัวคอลัมน์ไม่ครบ ขาด: ' + missing.join(', ') + '</div>';
+        return;
+      }
+      var rows = [];
+      var skipped = 0;
+      results.data.forEach(function(r){
+        var contract = (r.contract || '').trim();
+        if (!contract){ skipped++; return; }
+        rows.push({
+          contract: contract,
+          currency: (r.currency || '').trim(),
+          customer: (r.customer || '').trim(),
+          tel: (r.tel || '').trim(),
+          accname: (r.accname || '').trim(),
+          addr: (r.addr || '').trim()
+        });
+      });
+      if (!rows.length){
+        resultEl.innerHTML = '<div class="search-status err">ไม่พบแถวข้อมูลที่ใช้ได้ในไฟล์ (ต้องมีเลขบัญชีในคอลัมน์ contract)</div>';
+        return;
+      }
+      adminParsedRows = rows;
+      summaryEl.textContent = 'พบ ' + rows.length + ' รายการที่จะเพิ่ม/อัปเดต' +
+        (skipped ? ' (ข้าม ' + skipped + ' แถวที่ไม่มีเลขบัญชี)' : '');
+      previewBox.style.display = '';
+    },
+    error: function(err){
+      resultEl.innerHTML = '<div class="search-status err">อ่านไฟล์ไม่สำเร็จ: ' + err.message + '</div>';
+    }
+  });
+}
+
+async function runAdminUpsert(){
+  var resultEl = document.getElementById('adminCsvResult');
+  if (!isAdmin()){
+    resultEl.innerHTML = '<div class="search-status err">บัญชีนี้ไม่มีสิทธิ์อัปโหลดข้อมูล</div>';
+    return;
+  }
+  if (!adminParsedRows.length) return;
+
+  var btn = document.getElementById('adminUploadBtn');
+  var progEl = document.getElementById('adminCsvProgress');
+  btn.disabled = true;
+  progEl.style.display = '';
+  resultEl.innerHTML = '';
+
+  var total = adminParsedRows.length;
+  var batches = [];
+  for (var i=0; i<total; i+=ADMIN_BATCH_SIZE) batches.push(adminParsedRows.slice(i, i+ADMIN_BATCH_SIZE));
+
+  var okCount = 0;
+  var errMsgs = [];
+  for (var b=0; b<batches.length; b++){
+    progEl.textContent = 'กำลังอัปโหลด batch ' + (b+1) + '/' + batches.length + ' (' + batches[b].length + ' แถว)...';
+    try{
+      var res = await sbAuth.from('data123').upsert(batches[b], { onConflict: 'contract' });
+      if (res.error){ errMsgs.push('batch ' + (b+1) + ': ' + res.error.message); }
+      else { okCount += batches[b].length; }
+    }catch(e){
+      errMsgs.push('batch ' + (b+1) + ': ' + e.message);
+    }
+  }
+
+  progEl.style.display = 'none';
+  btn.disabled = false;
+  var html = '<div class="search-status ok">อัปเดตสำเร็จ ' + okCount + ' / ' + total + ' รายการ</div>';
+  if (errMsgs.length){
+    html += '<div class="search-status err" style="margin-top:6px">มีข้อผิดพลาด ' + errMsgs.length + ' batch:<br>' + errMsgs.join('<br>') + '</div>';
+  }
+  resultEl.innerHTML = html;
+  if (!errMsgs.length){
+    adminParsedRows = [];
+    document.getElementById('adminCsvPreview').style.display = 'none';
+    document.getElementById('adminCsvFile').value = '';
+  }
 }
 
 initAuth();
