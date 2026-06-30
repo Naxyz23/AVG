@@ -2119,7 +2119,7 @@ function searchCustomer(btn){
   if (DATA_MODE === "SUPABASE" && SUPABASE_URL && SUPABASE_ANON_KEY){
     statusEl.textContent = "⏳ ກຳລັງຄົ້ນຫາ..."; statusEl.className = "search-status";
     var esc = q.replace(/[%*]/g, ""); // กันตัวอักษรพิเศษของ pattern matching หลุดเข้าไปใน query
-    var filter = "or=(contract.ilike.*" + encodeURIComponent(esc) + "*,customer.ilike.*" + encodeURIComponent(esc) + "*)";
+    var filter = "or=(contract.ilike.*" + encodeURIComponent(esc) + "*,customer.ilike.*" + encodeURIComponent(esc) + "*)&contract=not.ilike.*-*";
     var url = SUPABASE_URL + "/rest/v1/data123?select=*&" + filter + "&limit=12";
     fetch(url, { headers: getAuthHeaders() })
       .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
