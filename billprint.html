@@ -6,6 +6,7 @@
 <title>EZ Teller</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600;700&family=Noto+Serif:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#0274bf;--panel:#025fa0;--panel2:#0369b0;--line:#1a85d0;
@@ -412,10 +413,51 @@ footer b{color:var(--bp-gold);}
 .bp-page-wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px;background:transparent;color:var(--bp-text);font-family:'IBM Plex Sans','Noto Sans Lao',sans-serif;font-size:15px;border-radius:0;}
 #viewBill .bp-footer{text-align:center;color:var(--bp-muted);font-size:11.5px;margin-top:18px;letter-spacing:.3px;}
 #viewBill .bp-footer b{color:var(--bp-gold);}
+#authOverlay{position:fixed;inset:0;z-index:9999;background:rgba(2,16,32,.86);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  display:flex;align-items:center;justify-content:center;padding:16px}
+#authOverlay.hide{display:none}
+.auth-card{width:100%;max-width:320px;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:28px 22px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.auth-card h1{font-family:'Noto Sans Lao','IBM Plex Sans',sans-serif;font-weight:700;
+  font-size:26px;color:var(--ink);margin:6px 0 4px;text-align:center}
+.auth-card .auth-sub{font-size:12px;color:var(--muted);text-align:center;margin:0 0 18px}
+.auth-card label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+.auth-card input{width:100%;box-sizing:border-box;background:rgba(0,0,0,.2);border:1px solid var(--line);
+  color:var(--ink);border-radius:9px;padding:10px 12px;font-family:"IBM Plex Sans","Noto Sans Lao",sans-serif;
+  font-size:14px;margin-bottom:14px}
+.auth-card input:focus{outline:none;border-color:var(--gold2)}
+.auth-card .btn{width:100%;padding:11px 0;border-radius:9px}
+.auth-err{font-size:12px;color:#ff8a8a;text-align:center;min-height:16px;margin-bottom:10px}
+.userbar{position:fixed;top:10px;right:12px;z-index:200;display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--muted);background:rgba(2,20,40,.55);border:1px solid var(--line);
+  border-radius:20px;padding:5px 6px 5px 12px}
+.userbar .btn{padding:4px 10px;font-size:11px;border-radius:14px}
 </style>
 </head>
 
 <body>
+
+<div id="authOverlay">
+  <div class="auth-card">
+    <h1>ເຂົ້າສູ່ລະບົບ EZ Teller</h1>
+    <p class="auth-sub">ບັນຊີຜູ້ໃຊ້ສ້າງດ້ວຍ admin ເທົ່ານັ້ນ</p>
+    <form id="authForm" onsubmit="return handleLogin(event)">
+      <label for="authUser">ຊື່ຜູ້ໃຊ້ · Username</label>
+      <input type="text" id="authUser" autocomplete="username" placeholder="teller1" required>
+      <label for="authPass">ລະຫັດຜ່ານ · Password</label>
+      <input type="password" id="authPass" autocomplete="current-password" required>
+      <div class="auth-err" id="authErr"></div>
+      <button type="submit" class="btn primary" id="authBtn">ເຂົ້າສູ່ລະບົບ</button>
+    </form>
+  </div>
+</div>
+
+<span class="userbar" id="userbar" style="display:none">
+  <span id="userLabel"></span>
+  <button class="btn ghost" onclick="handleLogout()">ອອກຈາກລະບົບ</button>
+</span>
+
   <div class="topbar">
     <span class="nav-hint">ກົດເພື່ອສະຫຼັບໜ້າ &middot; tap to switch</span>
     <nav class="nav">
@@ -425,6 +467,7 @@ footer b{color:var(--bp-gold);}
       <button class="nav-btn" id="navFee" onclick="showView('fee')">Service Fees<small>Fee calc</small></button>
     </nav>
   </div>
+
 
 <div class="wrap" style="display:none">
   <div id="viewAdb" style="display:none">
@@ -1776,6 +1819,103 @@ var SUPABASE_URL = "https://advbyotpcibpjalfqbwj.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_bZgaOm9_2fbYxS90QtsuOQ_w3kmxNKh";
 var SHEETS_API_URL = "";           // ของเดิม (ใช้เฉพาะถ้า DATA_MODE = "SHEETS")
 
+/* =========================================================
+   AUTH — Supabase Auth (login รายคน) + session timeout 8 ชม.
+   - บัญชีสร้างโดย admin ใน Supabase Dashboard เท่านั้น (ไม่มี self sign-up)
+   - username ที่กรอก (เช่น "teller1") จะถูกต่อ EMAIL_DOMAIN ให้เป็น
+     teller1@ezteller.local ก่อนส่งไป signInWithPassword
+   - SESSION_MAX_MS คือเวลาสูงสุดที่ login ค้างได้นับจากเวลา login
+     (ทำฝั่ง client เพราะ Supabase free plan ไม่มี session timeout ในตัว)
+   ========================================================= */
+var EMAIL_DOMAIN = "@ezteller.local";
+var SESSION_MAX_MS = 8 * 60 * 60 * 1000; // 8 ชั่วโมง
+var LOGIN_AT_KEY = "ez_login_at";
+
+var sbAuth = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+var currentSession = null;
+
+function showAuthOverlay(){
+  document.getElementById("authOverlay").classList.remove("hide");
+  document.getElementById("userbar").style.display = "none";
+}
+function hideAuthOverlay(session){
+  currentSession = session;
+  document.getElementById("authOverlay").classList.add("hide");
+  var ub = document.getElementById("userbar");
+  ub.style.display = "";
+  var email = (session && session.user && session.user.email) || "";
+  document.getElementById("userLabel").textContent = email.replace(EMAIL_DOMAIN, "");
+}
+
+function handleLogin(ev){
+  ev.preventDefault();
+  if(!sbAuth){ document.getElementById("authErr").textContent = "ໂຫລດ Supabase library ບໍ່ສຳເລັດ — ກວດ internet"; return false; }
+  var uRaw = document.getElementById("authUser").value.trim().toLowerCase();
+  var email = uRaw.indexOf("@") >= 0 ? uRaw : (uRaw + EMAIL_DOMAIN);
+  var pass = document.getElementById("authPass").value;
+  var btn = document.getElementById("authBtn");
+  var errEl = document.getElementById("authErr");
+  errEl.textContent = "";
+  btn.disabled = true; btn.textContent = "ກຳລັງເຂົ້າສູ່ລະບົບ...";
+  sbAuth.auth.signInWithPassword({ email: email, password: pass }).then(function(res){
+    btn.disabled = false; btn.textContent = "ເຂົ້າສູ່ລະບົບ";
+    if (res.error){
+      errEl.textContent = "ຊື່ຜູ້ໃຊ້ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ";
+      return;
+    }
+    localStorage.setItem(LOGIN_AT_KEY, String(Date.now()));
+    hideAuthOverlay(res.data.session);
+  }).catch(function(){
+    btn.disabled = false; btn.textContent = "ເຂົ້າສູ່ລະບົບ";
+    errEl.textContent = "ເຊື່ອມຕໍ່ບໍ່ໄດ້ — ລອງໃໝ່ອີກຄັ້ງ";
+  });
+  return false;
+}
+
+function handleLogout(){
+  localStorage.removeItem(LOGIN_AT_KEY);
+  if (sbAuth) sbAuth.auth.signOut();
+  currentSession = null;
+  showAuthOverlay();
+}
+
+function isSessionExpiredByClock(){
+  var t = Number(localStorage.getItem(LOGIN_AT_KEY) || 0);
+  if (!t) return true;
+  return (Date.now() - t) > SESSION_MAX_MS;
+}
+
+function initAuth(){
+  if (!sbAuth){
+    // ไม่มี library โหลด (เช่น ออฟไลน์ตอนแรกเปิด) — ปล่อยให้ overlay ค้างไว้ ผู้ใช้ refresh ใหม่
+    showAuthOverlay();
+    return;
+  }
+  sbAuth.auth.getSession().then(function(res){
+    var session = res.data && res.data.session;
+    if (session && !isSessionExpiredByClock()){
+      hideAuthOverlay(session);
+    } else {
+      if (session) sbAuth.auth.signOut(); // session ยังไม่หมดอายุฝั่ง Supabase แต่เกิน 8 ชม.ของเราแล้ว
+      localStorage.removeItem(LOGIN_AT_KEY);
+      showAuthOverlay();
+    }
+  });
+  // เช็คทุก 5 นาที ระหว่างเปิดแอปค้างไว้ ถ้าเกิน 8 ชม. ให้ดีดออกอัตโนมัติ
+  setInterval(function(){
+    if (currentSession && isSessionExpiredByClock()) handleLogout();
+  }, 5 * 60 * 1000);
+}
+
+function getAuthHeaders(){
+  var token = (currentSession && currentSession.access_token) || SUPABASE_ANON_KEY;
+  return { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + token };
+}
+
+initAuth();
+
 var sampleCustomers = [
   { CONTRACT:"0330400410000001", CURRENCY:"LAK", CUSTOMER:"ລູກຄ້າຕົວຢ່າງ 1", TEL:"020XXXXXXX1", ACCNAME:"ລູກຄ້າຕົວຢ່າງ 1", Addr:"ບ້ານທົດສອບ, ນະຄອນຫຼວງ (DEMO)" },
   { CONTRACT:"0330400410000002", CURRENCY:"THB", CUSTOMER:"ລູກຄ້າຕົວຢ່າງ 2", TEL:"020XXXXXXX2", ACCNAME:"ລູກຄ້າຕົວຢ່າງ 2", Addr:"ບ້ານທົດສອບ 2 (DEMO)" },
@@ -1826,7 +1966,7 @@ function searchCustomer(btn){
     var esc = q.replace(/[%*]/g, ""); // กันตัวอักษรพิเศษของ pattern matching หลุดเข้าไปใน query
     var filter = "or=(contract.ilike.*" + encodeURIComponent(esc) + "*,customer.ilike.*" + encodeURIComponent(esc) + "*)";
     var url = SUPABASE_URL + "/rest/v1/data123?select=*&" + filter + "&limit=12";
-    fetch(url, { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY } })
+    fetch(url, { headers: getAuthHeaders() })
       .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function(rows){
         if (rows && rows.length){
