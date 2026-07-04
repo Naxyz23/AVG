@@ -2080,9 +2080,14 @@ var sampleCustomers = [
 function applyHit(block, hit, statusEl, tag){
   block.querySelectorAll("[data-field]").forEach(function(el){
     var key = el.getAttribute("data-field");
-    if(hit[key] !== undefined){ el.value = hit[key]; el.dispatchEvent(new Event("input")); }
+    if(hit[key]){ el.value = hit[key]; el.dispatchEvent(new Event("input")); } // ไม่เขียนทับด้วยค่าว่าง/EMPTY — คงค่าตั้งต้นของฟิลด์ไว้
   });
-  statusEl.textContent = "✓ ພົບຂໍ້ມູນ" + (tag ? " ("+tag+")" : ""); statusEl.className = "search-status ok";
+  var missingEssential = !hit.ACCNAME || !hit.TEL || !hit.CURRENCY;
+  if (missingEssential){
+    statusEl.textContent = "ກະລຸນາ ລະບຸຊື່ຜູ້ມອບ ເບີໂທ ແລະ ສະກຸນເງິນ"; statusEl.className = "search-status err";
+  } else {
+    statusEl.textContent = "✓ ພົບຂໍ້ມູນ" + (tag ? " ("+tag+")" : ""); statusEl.className = "search-status ok";
+  }
   var curSel = block.querySelector('[data-field="CURRENCY"]');
   if (curSel) onCurrencyChange(curSel);
   recompute();
@@ -2126,7 +2131,8 @@ function searchCustomer(btn){
       .then(function(rows){
         if (rows && rows.length){
           var r0 = rows[0];
-          var hit = { CONTRACT:r0.contract, CURRENCY:r0.currency, CUSTOMER:r0.customer, TEL:r0.tel, ACCNAME:r0.accname, Addr:r0.addr };
+          var cleanVal = function(v){ return (v===null||v===undefined||String(v).trim().toUpperCase()==="EMPTY") ? "" : v; };
+          var hit = { CONTRACT:cleanVal(r0.contract), CURRENCY:cleanVal(r0.currency), CUSTOMER:cleanVal(r0.customer), TEL:cleanVal(r0.tel), ACCNAME:cleanVal(r0.accname), Addr:cleanVal(r0.addr) };
           applyHit(block, hit, statusEl, "data");
         } else {
           statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນ"; statusEl.className = "search-status err";
@@ -2221,7 +2227,7 @@ var UI_HIDDEN_SLOTS = { LAK: [8,9,10,11,12,13,14,15] }; // 200,100,50,20,10,5,2,
     var hidden = UI_HIDDEN_SLOTS[cur] || [];
     DENOM_SLOTS_DEPOSIT.forEach(function(slot, i){
       var v = slot[cur];
-      if (v === null) return; // สกุลนี้ไม่มีระดับนี้ — ไม่ต้องโชว์ช่องกรอกเลย (ตำแหน่งพิมพ์ยังคงเดิมเพราะอ้างจาก data-slot)
+      if (v === null || v === undefined) return; // สกุลนี้ไม่มีระดับนี้ หรือยังไม่รู้จักสกุลเงิน — ไม่ต้องโชว์ช่องกรอกเลย (ตำแหน่งพิมพ์ยังคงเดิมเพราะอ้างจาก data-slot)
       if (hidden.indexOf(i) >= 0) return; // ไม่ได้ใช้งานจริง — ซ่อนออกจากหน้าจอ
       var row = document.createElement("div");
       row.className = "amount-row";
