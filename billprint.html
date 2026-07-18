@@ -951,6 +951,7 @@ footer b{color:var(--bp-gold);}
   </div>
   <div class="calib-group">
     <button class="calib-btn" onclick="toggleGuides()" id="guideBtn">Grid</button>
+    <button class="calib-btn" onclick="useCloudCalib()" title="ล้างค่าที่ปรับไว้ในเครื่องนี้ แล้วดึงค่าล่าสุดที่ Admin ตั้งไว้มาใช้แทน">↺ ໃຊ້ຄ່າ Admin</button>
     <button class="calib-btn danger" onclick="resetCalib()">Reset</button>
     <button class="calib-btn gold" onclick="closePreview()">Done</button>
   </div>
@@ -1893,6 +1894,9 @@ function hideAuthOverlay(session){
   var email = (session && session.user && session.user.email) || "";
   document.getElementById("userLabel").textContent = email.replace(EMAIL_DOMAIN, "");
   document.getElementById("navAdmin").style.display = isAdmin() ? "" : "none";
+  // ล็อกอินสำเร็จแล้ว — ค่อยไปดึงตำแหน่งพิมพ์ล่าสุดจาก cloud มาทับของในเครื่อง
+  // (รอให้ล็อกอินก่อนเพราะตาราง print_calib ต้อง authenticated ถึงจะอ่านได้)
+  if (typeof fetchCloudCalib === "function") fetchCloudCalib();
 }
 
 function handleLogin(ev){
@@ -2421,24 +2425,89 @@ var PAGE_OFFSET = {};   // {deposit:{x,y}, deposit_old:{x,y}, withdraw:{x,y}, tr
 var FIELD_OFFSETS = {}; // {deposit:{customer:{x,y},...}, ...}
 var PRINT_TYPES = ['deposit','deposit_old','withdraw','transfer'];
 
-function loadCalib(){
+/* =========================================================
+   ตำแหน่งพิมพ์ (calibration) — sync ผ่าน Supabase (ตาราง print_calib
+   แถวเดียว id=1) เพื่อให้ทุกเครื่อง/ทุก user ใช้ตำแหน่งเดียวกัน
+   - อ่าน: ทำหลังล็อกอินสำเร็จ (เรียกจาก hideAuthOverlay) — ทุกคนอ่านได้
+   - เขียนขึ้น cloud: เฉพาะ isAdmin() เท่านั้น (เช็คซ้ำฝั่ง RLS ด้วย ไม่ใช่พึ่ง
+     แค่ฝั่งหน้าเว็บ) ผู้ใช้ทั่วไปที่เข้าโหมดปรับตำแหน่งได้แค่ผลชั่วคราวในเครื่อง
+     ตัวเอง (เก็บ localStorage ไว้กันเครื่องออฟไลน์) พอโหลดหน้าใหม่/ล็อกอินใหม่
+     ค่าจาก cloud (ของ admin) จะทับกลับมาเสมอ
+   ต้องสร้างตาราง print_calib ใน Supabase ก่อนถึงจะ sync ได้จริง (ดูคำแนะนำ SQL
+   ที่ส่งแยกให้ — ถ้ายังไม่สร้างตาราง โค้ดนี้จะ fail เงียบๆ แล้ว fallback ไปใช้
+   localStorage เหมือนเดิม ไม่กระทบการใช้งานอื่น)
+   ========================================================= */
+var CALIB_TABLE = 'print_calib';
+var CALIB_ROW_ID = 1;
+var calibPushTimer = null;
+
+function applyCalibData(o){
   PAGE_OFFSET = {}; FIELD_OFFSETS = {};
   PRINT_TYPES.forEach(function(t){ PAGE_OFFSET[t]={x:0,y:0}; FIELD_OFFSETS[t]={}; });
+  if (o){
+    PRINT_TYPES.forEach(function(t){
+      if(o.pages && o.pages[t]) PAGE_OFFSET[t] = o.pages[t];
+      if(o.fields && o.fields[t]) FIELD_OFFSETS[t] = o.fields[t];
+    });
+  }
+}
+
+function loadCalib(){
+  // โหลดจาก localStorage ก่อนทันที (กันจอกระพริบ/ยังใช้งานได้แม้ออฟไลน์หรือยังไม่ล็อกอิน)
+  // ค่าจาก cloud จะมาทับทีหลังหลังล็อกอินสำเร็จ (ดู fetchCloudCalib ที่เรียกจาก hideAuthOverlay)
   try{
     var raw = localStorage.getItem(STORE_KEY);
-    if(raw){
-      var o = JSON.parse(raw);
-      PRINT_TYPES.forEach(function(t){
-        if(o.pages && o.pages[t]) PAGE_OFFSET[t] = o.pages[t];
-        if(o.fields && o.fields[t]) FIELD_OFFSETS[t] = o.fields[t];
-      });
-    }
-  }catch(e){ /* localStorage ใช้ไม่ได้ในบางที่ — ไม่เป็นไร ใช้ค่าเริ่มต้น */ }
+    applyCalibData(raw ? JSON.parse(raw) : null);
+  }catch(e){ applyCalibData(null); /* localStorage ใช้ไม่ได้ในบางที่ — ไม่เป็นไร ใช้ค่าเริ่มต้น */ }
 }
+
+function fetchCloudCalib(force){
+  if (!sbAuth) return;
+  // ถ้าเครื่องนี้เคยมีค่าตำแหน่งพิมพ์บันทึกไว้แล้ว (ไม่ว่าจะเป็นค่าที่เคย sync มาจาก cloud
+  // ครั้งแรก หรือค่าที่ user ปรับเอง/save เองทับไว้ทีหลัง) จะ "ไม่" ดึงจาก cloud มาทับอัตโนมัติ
+  // อีก เพื่อให้ค่าที่ปรับเองค้างอยู่ถาวรในเครื่องนั้นต่อไปเรื่อยๆ — จะดึงจาก cloud มาทับก็ต่อเมื่อ
+  // เป็นเครื่องใหม่ที่ยังไม่เคยมีค่าอะไรเลย (force=false ครั้งแรกสุด) หรือ user กดปุ่ม "ໃຊ້ຄ່າ Admin"
+  // เองอย่างชัดเจน (force=true)
+  if (!force){
+    try{ if (localStorage.getItem(STORE_KEY)) return; }catch(e){}
+  }
+  sbAuth.from(CALIB_TABLE).select('data').eq('id', CALIB_ROW_ID).maybeSingle()
+    .then(function(res){
+      if (!res || res.error || !res.data) return; // ยังไม่มีตาราง/แถว หรือออฟไลน์ — ใช้ค่า local ที่โหลดไว้แล้วต่อไปเงียบๆ
+      applyCalibData(res.data.data);
+      try{ localStorage.setItem(STORE_KEY, JSON.stringify({pages:PAGE_OFFSET, fields:FIELD_OFFSETS})); }catch(e){}
+      applyPageOffset();
+      if (typeof refreshPreview === 'function') refreshPreview();
+    })
+    .catch(function(){ /* ออฟไลน์/เน็ตหลุด — ใช้ค่า local ต่อไปเงียบๆ */ });
+}
+
+function useCloudCalib(){
+  if (!confirm('ล้างตำแหน่งพิมพ์ที่ปรับไว้ในเครื่องนี้ แล้วใช้ตามที่ Admin ตั้งค่าไว้ล่าสุดแทน?')) return;
+  fetchCloudCalib(true);
+}
+
 function saveCalib(){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify({pages:PAGE_OFFSET, fields:FIELD_OFFSETS})); }
   catch(e){ /* เงียบไว้ ถ้าเซฟไม่ได้ก็ยังใช้งานต่อได้แค่ไม่จำ */ }
+  pushCalibToCloudDebounced();
 }
+
+function pushCalibToCloudDebounced(){
+  if (!sbAuth || !isAdmin()) return; // เฉพาะ admin เท่านั้นที่ดันขึ้น cloud ได้ (เช็คซ้ำฝั่ง RLS อีกชั้น)
+  if (calibPushTimer) clearTimeout(calibPushTimer);
+  calibPushTimer = setTimeout(function(){
+    sbAuth.from(CALIB_TABLE).upsert({
+      id: CALIB_ROW_ID,
+      data: {pages:PAGE_OFFSET, fields:FIELD_OFFSETS},
+      updated_by: (currentSession && currentSession.user && currentSession.user.email) || null,
+      updated_at: new Date().toISOString()
+    }).then(function(res){
+      if (res && res.error) console.warn('บันทึกตำแหน่งพิมพ์ขึ้น cloud ไม่สำเร็จ:', res.error.message);
+    });
+  }, 600); // รวมการกดปุ่มลูกศรปรับตำแหน่งถี่ๆ ให้ยิงขึ้น cloud แค่ครั้งเดียว
+}
+
 function fieldOff(name){ var t = CALIB_TYPE; return (FIELD_OFFSETS[t] && FIELD_OFFSETS[t][name]) || {x:0,y:0}; }
 
 function applyPageOffset(){
@@ -2571,15 +2640,22 @@ function buildWithdrawGrid(){
 
   var tiers = DENOM_SLOTS_SIMPLE9[cur] || DENOM_SLOTS_SIMPLE9.LAK;
   var html = origin.innerHTML;
+  // แถวรวมยอด (ผลลัพธ์) ต้องตายตัวอยู่ "แถวสุดท้าย" ของใบพิมพ์เสมอ (DENOM_ROW_TOPS_WD ตัวสุดท้าย)
+  // ไม่ใช่ตำแหน่งที่ค่า 0 บังเอิญไปอยู่ใน tiers ของแต่ละสกุลเงิน — LAK/THB มี 8 ชนิดแบงค์พอดี
+  // ทำให้ 0 ไปตกแถวสุดท้ายพอดีอยู่แล้ว แต่ CNY (6 ชนิด) และ USD (7 ชนิด) มีแบงค์น้อยกว่า ทำให้ 0
+  // ไปตกกลางตาราง ชนกับตำแหน่งช่องกรอกจำนวนเงินของแถวอื่น เวลาพิมพ์ยอดรวมเลยไปทับ/ผิดเพี้ยน
+  var TOTAL_ROW = DENOM_ROW_TOPS_WD.length - 1;
   for (var i=0; i<tiers.length; i++){
-    if (tiers[i] === '') continue;
+    if (tiers[i] === '' || tiers[i] === 0) continue; // '' = สกุลนี้ไม่มีระดับนี้, 0 = ตัวบอกตำแหน่งรวมยอด (วาดแยกด้านล่างที่แถวตายตัวเสมอ)
     var val = (d.bySlot && d.bySlot[i]) || 0;
-    if (tiers[i] === 0) val = Math.floor(total); // ช่องสุดท้าย = ยอดรวมทั้งหมด (ตัดทศนิยม ไม่ปัดขึ้น)
-    var lbl = (tiers[i] === 0) ? '' : Number(tiers[i]).toLocaleString();
+    var lbl = Number(tiers[i]).toLocaleString();
     var odi = fieldOff('denom'+i);
     html += '<div class="pf small" style="left:'+(DENOM_BASE_WD_LABEL.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[i]+odi.y)+'pt; width:'+DENOM_BASE_WD_LABEL.w+'pt; height:'+DENOM_ROW_H_WD[i]+'pt; justify-content:flex-end;">'+lbl+'</div>';
     html += '<div class="pf small" data-field="denom'+i+'" data-denomidx="'+i+'" style="left:'+(DENOM_BASE_WD.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[i]+odi.y)+'pt; width:'+DENOM_BASE_WD.w+'pt; height:'+DENOM_ROW_H_WD[i]+'pt;">'+fmtAmount(val)+'</div>';
   }
+  // ช่องผลลัพธ์รวมเงิน — แยกออกจากช่องกรอกจำนวนเงินด้านบนอย่างชัดเจน วาดที่แถวสุดท้ายตายตัวเสมอทุกสกุลเงิน
+  var totalOff = fieldOff('denom'+TOTAL_ROW);
+  html += '<div class="pf small" data-field="denom'+TOTAL_ROW+'" data-denomidx="'+TOTAL_ROW+'" style="left:'+(DENOM_BASE_WD.x+totalOff.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[TOTAL_ROW]+totalOff.y)+'pt; width:'+DENOM_BASE_WD.w+'pt; height:'+DENOM_ROW_H_WD[TOTAL_ROW]+'pt;">'+fmtAmount(Math.floor(total))+'</div>';
   origin.innerHTML = html;
 }
 
