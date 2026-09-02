@@ -282,6 +282,41 @@ table.rate-tbl tr.grp-start td{border-top:1px solid var(--line)}
 .float-label{position:absolute;left:12px;top:-8px;font-size:10.5px;font-weight:500;color:var(--bp-muted);background:var(--bp-panel);padding:0 6px;opacity:1;pointer-events:none;transition:opacity .25s ease;white-space:nowrap;}
 .input-detail .form-select:focus + .float-label{color:var(--bp-gold);}
 
+/* dropdown ເນື້ອໃນ — list ในหน้าเว็บเอง scroll ได้แน่นอนทั้งเมาส์/ทัชสกรีน
+   ใช้ position:fixed จึงไม่โดน overflow:hidden ของการ์ดตัดหัวตัดท้าย */
+/* แท็บแบ่งครึ่ง — ใบเดียวกันแต่มีสองแบบ (ໃໝ່ / ເກົ່າ) */
+.type-tabs .tab-split{flex:1.6 1 230px;display:flex;flex-direction:column;border:1px solid var(--bp-border);border-bottom:none;border-radius:10px 10px 0 0;background:transparent;}
+.tab-split .ts-title{padding:6px 8px 2px;text-align:center;font-size:13px;font-weight:700;color:var(--bp-muted);transition:color .2s ease;}
+.tab-split .ts-title i{margin-right:6px;}
+.tab-split.on .ts-title{color:var(--bp-gold);}
+.tab-split .ts-halves{display:flex;padding:0 5px 5px;gap:4px;}
+.type-tabs .tab-split .ts-halves button{flex:1 1 0;border:1px solid var(--bp-border);border-bottom:1px solid var(--bp-border);background:transparent;color:var(--bp-muted);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s ease;}
+.type-tabs .tab-split .ts-halves button:hover{color:var(--bp-text);background:rgba(255,255,255,.06);}
+.type-tabs .tab-split .ts-halves button.active{background:var(--bp-gold);color:#1d1300;border-color:var(--bp-gold);}
+
+/* ตัวเลือกแบบฟอร์ม (ใบเดียวกัน แต่ตำแหน่งพิมพ์คนละแบบ) */
+.form-variant{display:flex;align-items:center;gap:6px;margin:0 0 8px;flex-wrap:nowrap;}
+.form-variant .fv-label{font-size:11px;color:var(--bp-muted);letter-spacing:.4px;flex:0 0 auto;}
+.fv-btn{flex:1 1 auto;border:1px solid var(--bp-border);background:transparent;color:var(--bp-muted);border-radius:7px;padding:3px 14px;line-height:1.45;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s ease;}
+.fv-btn:hover{color:var(--bp-text);background:rgba(255,255,255,.05);}
+.fv-btn.active{background:var(--bp-gold);color:#1d1300;border-color:var(--bp-gold);}
+.preview-stage.calib .pf{cursor:move;}
+
+.dd-btn{text-align:left;cursor:pointer;padding-right:32px;position:relative;}
+.dd-btn:after{content:"";position:absolute;right:14px;top:50%;width:7px;height:7px;margin-top:-5px;border-right:2px solid var(--bp-muted);border-bottom:2px solid var(--bp-muted);transform:rotate(45deg);transition:transform .18s ease;}
+.dd-btn.open:after{transform:rotate(-135deg);margin-top:-2px;}
+.dd-btn.open{border-color:var(--bp-gold);}
+.dd-list{display:none;position:fixed;z-index:100000;background:#0c2236;border:1px solid var(--bp-gold);border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.5);max-height:280px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:5px;}
+.dd-list.open{display:block;}
+.dd-item{padding:10px 12px;border-radius:7px;font-size:14px;line-height:1.5;color:#eaf3fb;cursor:pointer;}
+.dd-item:hover{background:rgba(255,255,255,.09);}
+.dd-item.active{background:rgba(255,255,255,.14);}
+.dd-item.sel{background:var(--bp-gold);color:#1d1300;font-weight:600;}
+.dd-list::-webkit-scrollbar{width:11px;}
+.dd-list::-webkit-scrollbar-track{background:transparent;}
+.dd-list::-webkit-scrollbar-thumb{background:#1c4a6b;border-radius:8px;border:3px solid #0c2236;}
+@media print{.dd-list{display:none !important;}}
+
 .txn-row{display:flex;gap:10px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px dashed var(--bp-border);flex-wrap:wrap;}
 .txn-row .input-detail{flex:1 1 220px;margin:0;}
 .print-btn{display:flex;align-items:center;gap:8px;background:linear-gradient(90deg, var(--bp-navy), #0a93e8);border:1px solid var(--bp-navy);color:#fff;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px;cursor:pointer;transition:filter .2s;}
@@ -679,23 +714,22 @@ footer b{color:var(--bp-gold);}
 
   <div id="viewAdmin" style="display:none">
     <h1>Admin <small class="lao">ນຳເຂົ້າຂໍ້ມູນລູກຄ້າ</small></h1>
-    <p class="sub">อัปโหลดไฟล์ CSV รายสัปดาห์ — เพิ่ม/อัปเดตข้อมูลลูกค้าอัตโนมัติ ไม่ต้องเข้า Supabase Dashboard</p>
 
     <div class="card">
-      <div class="card-title">📤 อัปโหลดข้อมูลลูกค้า (data123)</div>
+      <div class="card-title">📤 ອັບໂຫລດຂໍ້ມູນລູກຄ້າ (data123)</div>
 
       <div class="fld">
         <label class="drop-zone" for="adminCsvFile">
           <span class="icon">📄</span>
-          <b>แตะเพื่อเลือกไฟล์ CSV</b>
-          <small>หัวคอลัมน์ต้องมี: contract, currency, customer, tel, accname, addr</small>
+          <b>ແຕະເພື່ອເລືອກໄຟລ໌ CSV</b>
+          <small>ຫົວຖັນຕ້ອງມີ: contract, currency, customer, tel, accname, addr</small>
         </label>
         <input type="file" id="adminCsvFile" accept=".csv" onchange="handleAdminCsvSelect(event)">
       </div>
 
       <div id="adminCsvPreview" style="display:none; margin-top:12px;">
         <div class="int-note" id="adminCsvSummary" style="margin:0 0 10px"></div>
-        <button class="btn primary" id="adminUploadBtn" onclick="runAdminUpsert()">ยืนยันอัปโหลด</button>
+        <button class="btn primary" id="adminUploadBtn" onclick="runAdminUpsert()">ຢືນຢັນອັບໂຫລດ</button>
       </div>
 
       <div id="adminCsvProgress" style="display:none; margin-top:12px;" class="int-note"></div>
@@ -703,8 +737,27 @@ footer b{color:var(--bp-gold);}
     </div>
 
     <div class="int-note" style="margin:14px 2px 0">
-      ใส่เฉพาะรายที่ใหม่หรือมีการแก้ไขก็พอ ไม่ต้องใส่ลูกค้าทั้งหมด — ระบบจะอัปเดตเฉพาะเลขบัญชี (contract) ที่ตรงกับไฟล์เท่านั้น
-      ส่วนที่ไม่อยู่ในไฟล์จะไม่ถูกแตะต้อง เลขบัญชีไหนมีอยู่แล้วจะถูกแทนที่ด้วยข้อมูลในไฟล์ ถ้ายังไม่มีจะถูกเพิ่มใหม่
+      ໃສ່ສະເພາະລາຍການໃໝ່ ຫຼື ທີ່ມີການແກ້ໄຂກໍພໍ ບໍ່ຕ້ອງໃສ່ລູກຄ້າທັງໝົດ — ລະບົບຈະອັບເດດສະເພາະເລກບັນຊີ (contract) ທີ່ກົງກັບໄຟລ໌ເທົ່ານັ້ນ
+      ສ່ວນທີ່ບໍ່ຢູ່ໃນໄຟລ໌ຈະບໍ່ຖືກແຕະຕ້ອງ ເລກບັນຊີໃດມີຢູ່ແລ້ວຈະຖືກແທນທີ່ດ້ວຍຂໍ້ມູນໃນໄຟລ໌ ຖ້າຍັງບໍ່ມີຈະຖືກເພີ່ມໃໝ່
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-title">📐 ສົ່ງຄ່າຕຳແໜ່ງພິມໃຫ້ NANA</div>
+      <div class="int-note" style="margin:0 0 10px">
+        1) ກົດປຸ່ມລຸ່ມນີ້ &nbsp; 2) ຄ່າຈະຖືກກັອບ (copy) ໃສ່ clipboard ໃຫ້ອັດຕະໂນມັດ &nbsp; 3) ພິມ (paste) ສົ່ງໃຫ້ NANA ທາງແຊັດໄດ້ເລີຍ
+      </div>
+      <button class="btn ghost" onclick="showCalibExport()">📋 ກັອບຄ່າຕຳແໜ່ງພິມ</button>
+      <div id="calibExportStatus" class="int-note" style="display:none; margin-top:8px"></div>
+      <textarea id="calibExportBox" readonly style="display:none; width:100%; box-sizing:border-box; margin-top:10px; min-height:180px; font-family:monospace; font-size:12px;"></textarea>
+
+      <div style="margin-top:18px; padding-top:14px; border-top:1px dashed rgba(255,255,255,.18)">
+        <div class="int-note" style="margin:0 0 8px">
+          &#128229; ນຳເຂົ້າ &mdash; paste JSON &rarr; restore print positions on this machine (admin only)
+        </div>
+        <textarea id="calibImportBox" placeholder='{ "pages": { ... }, "fields": { ... } }' style="width:100%; box-sizing:border-box; min-height:120px; font-family:monospace; font-size:12px;"></textarea>
+        <button class="btn ghost" style="margin-top:8px" onclick="importCalib()">&#128229; ນຳເຂົ້າຄ່າຕຳແໜ່ງພິມ</button>
+        <div id="calibImportStatus" class="int-note" style="display:none; margin-top:8px"></div>
+      </div>
     </div>
   </div><!-- /viewAdmin -->
 
@@ -719,11 +772,29 @@ footer b{color:var(--bp-gold);}
       <div class="bp-header-credit">EZ Teller &middot; Bill Printing &middot; Create by <b>NANA</b></div>
     </div>
 
+    <div id="draftBar" style="display:none;margin:12px 24px 0;padding:8px 12px;border:1px solid #D9A02A;border-radius:8px;background:rgba(217,160,42,.10);font-size:12.5px;line-height:1.7;">
+      <i class="fa-solid fa-clock-rotate-left" style="color:#D9A02A"></i>
+      <span id="draftBarText" class="lao"></span>
+      <button type="button" onclick="clearForm()" style="margin-left:8px;background:transparent;border:1px solid #D9A02A;color:#D9A02A;border-radius:6px;padding:2px 10px;font-family:inherit;font-size:12px;cursor:pointer;">ລ້າງຟອມ</button>
+      <button type="button" onclick="hideDraftBar()" style="margin-left:4px;background:transparent;border:none;color:inherit;opacity:.55;cursor:pointer;font-size:14px;">&#10005;</button>
+    </div>
+
     <div class="type-tabs">
-      <button class="active" data-type="deposit" onclick="switchType('deposit')"><i class="fa-solid fa-hand-holding-dollar"></i><span class="lao">ໃບມອບ</span></button>
+      <div class="tab-split" data-group="deposit|deposit_old">
+        <div class="ts-title lao"><i class="fa-solid fa-hand-holding-dollar"></i>ໃບມອບ</div>
+        <div class="ts-halves">
+          <button class="active" data-type="deposit" onclick="switchType('deposit')"><span class="lao">ໃໝ່</span></button>
+          <button data-type="deposit_old" onclick="switchType('deposit_old')"><span class="lao">ເກົ່າ</span></button>
+        </div>
+      </div>
       <button data-type="withdraw" onclick="switchType('withdraw')"><i class="fa-solid fa-money-bill-wave"></i><span class="lao">ໃບຖອນ</span></button>
-      <button data-type="transfer" onclick="switchType('transfer')"><i class="fa-solid fa-right-left"></i><span class="lao">ໃບໂອນ</span></button>
-      <button data-type="deposit_old" onclick="switchType('deposit_old')"><i class="fa-regular fa-clock"></i><span class="lao">ໃບມອບ (ເກົ່າ)</span></button>
+      <div class="tab-split" data-group="transfer">
+        <div class="ts-title lao"><i class="fa-solid fa-right-left"></i>ໃບໂອນ</div>
+        <div class="ts-halves">
+          <button data-variant="old" onclick="pickTransfer('old')"><span class="lao">ເກົ່າ</span></button>
+          <button data-variant="new" onclick="pickTransfer('new')"><span class="lao">ໃໝ່</span></button>
+        </div>
+      </div>
     </div>
 
     <div class="bill-grid">
@@ -892,8 +963,17 @@ footer b{color:var(--bp-gold);}
 
       <!-- ============ RIGHT: AMOUNT PANEL ============ -->
       <div class="bill-amount">
+        <div class="input-detail no-icon" style="margin:0 0 14px;">
+          <input class="form-input" id="billDate" placeholder="dd/mm/yyyy">
+          <span class="float-label lao">ວັນທີ</span>
+        </div>
         <div class="section-title lao" id="amountPanelTitle">ແຍກປະເພດທະນະບັດ</div>
         <div id="denom-rows"></div>
+        <div class="input-detail no-icon" id="expectedWrap" style="margin:12px 0 2px;">
+          <input class="form-input" id="expectedAmount" inputmode="decimal" placeholder="0.00" oninput="fmtMoneyInput(this, recompute)">
+          <span class="float-label lao">ຍອດທີ່ຕ້ອງການ</span>
+        </div>
+        <div id="expectedCheck" style="display:none;font-size:12.5px;margin:4px 2px 6px;font-weight:600;"></div>
         <div class="total-block">
           <div class="total-number"><span class="lao">ລວມ</span><span id="totalNumber">0.00</span></div>
           <div class="total-text lao" id="totalText">—</div>
@@ -905,6 +985,7 @@ footer b{color:var(--bp-gold);}
     <div class="bill-toolbar">
       <button class="tbtn" onclick="openPreview(false)"><i class="fa-solid fa-eye"></i> Preview <span class="sub">ເບິ່ງຕົວຢ່າງກ່ອນພິມ</span></button>
       <button class="tbtn" onclick="openPreview(true)"><i class="fa-solid fa-up-down-left-right"></i> ປັບຕຳແໜ່ງພິມ <span class="sub">Edit / calibrate</span></button>
+      <button class="tbtn" onclick="clearForm()"><i class="fa-solid fa-eraser"></i> ລ້າງຟອມ <span class="sub">ເລີ່ມໃບໃໝ່</span></button>
     </div>
 
   </div>
@@ -942,6 +1023,12 @@ footer b{color:var(--bp-gold);}
   <!-- เป๊ะตาม Excel: sheet ໃບໂອນ, print area A1:L19 -->
   <div class="print-page" id="printPage-transfer">
     <div class="origin" id="transferOrigin"></div>
+  </div>
+
+  <!-- ໃບໂອນ ແບບໃໝ່ — ช่องกรอกเหมือนแบบเก่าทุกอย่าง ต่างแค่ตำแหน่งพิมพ์
+       ค่าเริ่มต้นคัดลอกจากแบบเก่า แล้วปรับให้ตรงกระดาษใหม่ผ่านหน้า ປັບຕຳແໜ່ງພິມ -->
+  <div class="print-page" id="printPage-transfer2">
+    <div class="origin" id="transfer2Origin"></div>
   </div>
 
 </div>
@@ -983,6 +1070,7 @@ footer b{color:var(--bp-gold);}
       <option value="1.42">0.5 mm</option>
       <option value="0.71">0.25 mm</option>
       <option value="8.5">3 mm</option>
+      <option value="28.35">10 mm</option>
     </select>
   </div>
   <div class="calib-group">
@@ -1858,10 +1946,29 @@ var DENOM_SLOTS_SIMPLE9 = {
 var PRINT_DENOM_SLOTS = 16; // ใบມອບ: J2:J17 = 16 ช่อง (ตัดที่แถว 18 ตามพื้นที่พิมพ์จริง)
 
 /* "เนื้อใน" — ดึงจาก R-column ของแต่ละ sheet จริง */
+var DESC_SHARED = [
+  "ກຳໜົດເອງ",
+  "ມອບສົດເຂົ້າບັນຊີ",
+  "ເປີດບັນຊີໃໝ່",
+  "ມອບປັບຍອດ",
+  "ມອບແລກປ່ຽນ",
+  "ຄ່າທຳນຽມ",
+  "ຄ່າທຳນຽມບັດຟ້າ",
+  "ຄ່າທຳນຽມບັດຄຳ",
+  "ຄ່າທຳນຽມຖອນເງິນເກີນວົງເງິນ",
+  "ຄ່າທຳນຽມປິດບັນຊີ",
+  "ຄ່າທຳນຽມ ອອກປື້ມຫົວໃໝ່",
+  "ຄ່າທຳນຽມ ATMN ບັດຟ້າ",
+  "ຄ່າທຳນຽມ ATMN ບັດຄຳ",
+  "ຄ່າທຳນຽມ ATML ບັດຟ້າ",
+  "ຄ່າທຳນຽມ ATML ບັດຄຳ",
+  "ຄ່າທຳນຽມອອກລະຫັດໃຫມ່"
+];
+// ทั้ง 3 ใบใช้รายการเดียวกันหมด — teller จำชุดเดียว ไม่ต้องจำว่าใบไหนมีอะไร
 var DESC_OPTIONS = {
-  deposit: ["ກຳໜົດເອງ","ມອບສົດເຂົ້າບັນຊີ","ເປີດບັນຊີໃໝ່","ມອບປັບຍອດ","ມອບແລກປ່ຽນ","ຄ່າທຳນຽມ","ຄ່າທຳນຽມບັດຟ້າ","ຄ່າທຳນຽມບັດຄຳ","ຄ່າທຳນຽມຖອນເງິນເກີນວົງເງິນ","ຄ່າທຳນຽມປິດບັນຊີ","ຄ່າທຳນຽມ ອອກປື້ມຫົວໃໝ່"],
-  deposit_old: ["ກຳໜົດເອງ","ມອບສົດເຂົ້າບັນຊີ","ເປີດບັນຊີໃໝ່","ມອບປັບຍອດ","ມອບແລກປ່ຽນ"],
-  transfer: ["ກຳໜົດເອງ","ຄ່າທຳນຽມ","ຄ່າທຳນຽມ ATMN ບັດຟ້າ","ຄ່າທຳນຽມ ATMN ບັດຄຳ","ຄ່າທຳນຽມ ATML ບັດຟ້າ","ຄ່າທຳນຽມ ATML ບັດຄຳ","ຄ່າທຳນຽມອອກລະຫັດໃຫມ່"]
+  deposit: DESC_SHARED,
+  deposit_old: DESC_SHARED,
+  transfer: DESC_SHARED
 };
 ["deposit","deposit_old","transfer"].forEach(function(type){
   var sel = document.getElementById("descSelect-"+type);
@@ -1874,6 +1981,7 @@ var DESC_OPTIONS = {
 function onDescChange(sel, type){
   var custom = sel.value === "ກຳໜົດເອງ";
   document.getElementById("descCustomWrap-"+type).style.display = custom ? "block" : "none";
+  if (sel.__ddSync) sel.__ddSync();   // อัปเดตข้อความบนปุ่ม dropdown ที่ทำเอง
 }
 function getDescValue(type){
   var sel = document.getElementById("descSelect-"+type);
@@ -1925,6 +2033,58 @@ var sbAuth = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
   : null;
 var currentSession = null;
 
+/* ---------------------------------------------------------
+   TOKEN ไม่ให้ค้าง — access_token ของ Supabase หมดอายุทุก 1 ชม.
+   supabase-js ต่ออายุให้เองอยู่แล้ว แต่ต้องรับ token ใหม่มาเก็บไว้
+   ไม่งั้นแอปจะยิง token เก่าไปเรื่อยๆ จนต้อง reload หน้า
+   --------------------------------------------------------- */
+function refreshSessionQuiet(){
+  if (!sbAuth || !currentSession) return Promise.resolve(null);
+  return sbAuth.auth.getSession().then(function(res){
+    var ses = res && res.data && res.data.session;
+    if (ses) currentSession = ses;
+    return ses;
+  }).catch(function(){ return null; });
+}
+
+/* ยิง REST ไป Supabase แบบทนหมดอายุ:
+   ถ้าโดน 401/403 = token หมดอายุ -> ขอ token ใหม่แล้วยิงซ้ำอัตโนมัติ 1 ครั้ง
+   ผู้ใช้ไม่ต้องกด reload เอง */
+function sbFetch(url, opts, isRetry){
+  opts = opts || {};
+  var o = {}, k, k2;
+  for (k in opts) o[k] = opts[k];
+  var h = getAuthHeaders();
+  if (opts.headers) for (k2 in opts.headers) h[k2] = opts.headers[k2];
+  o.headers = h;
+  return fetch(url, o).then(function(r){
+    if ((r.status === 401 || r.status === 403) && !isRetry && sbAuth){
+      return sbAuth.auth.getSession().then(function(res){
+        var ses = res && res.data && res.data.session;
+        if (ses){ currentSession = ses; return sbFetch(url, opts, true); }
+        throw new Error("SESSION_EXPIRED");
+      });
+    }
+    return r;
+  });
+}
+
+if (sbAuth){
+  sbAuth.auth.onAuthStateChange(function(event, session){
+    if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN" || event === "USER_UPDATED"){
+      if (session) currentSession = session;
+    } else if (event === "SIGNED_OUT"){
+      currentSession = null;
+    }
+  });
+  // กลับมาเปิดแท็บอีกครั้งหลังทิ้งไว้นาน — ขอ token สดทันที
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible") refreshSessionQuiet();
+  });
+  // กันเหนียว: ต่ออายุเงียบๆ ทุก 10 นาที ระหว่างเปิดค้างไว้
+  setInterval(refreshSessionQuiet, 10 * 60 * 1000);
+}
+
 function showAuthOverlay(){
   document.getElementById("authOverlay").classList.remove("hide");
   document.getElementById("userbar").style.display = "none";
@@ -1943,6 +2103,8 @@ function hideAuthOverlay(session){
   // ล็อกอินสำเร็จแล้ว — ค่อยไปดึงตำแหน่งพิมพ์ล่าสุดจาก cloud มาทับของในเครื่อง
   // (รอให้ล็อกอินก่อนเพราะตาราง print_calib ต้อง authenticated ถึงจะอ่านได้)
   if (typeof fetchCloudCalib === "function") fetchCloudCalib();
+  // กู้ข้อมูลที่ค้างไว้ในฟอร์ม (ถ้ามี) — กันข้อมูลหายตอน reload / โดนดีดออก
+  if (typeof restoreDraft === "function") restoreDraft();
 }
 
 function handleLogin(ev){
@@ -2030,7 +2192,7 @@ function handleAdminCsvSelect(ev){
   if (!file) return;
 
   if (!isAdmin()){
-    resultEl.innerHTML = '<div class="search-status err">บัญชีนี้ไม่มีสิทธิ์อัปโหลดข้อมูล</div>';
+    resultEl.innerHTML = '<div class="search-status err">ບັນຊີນີ້ບໍ່ມີສິດອັບໂຫລດຂໍ້ມູນ</div>';
     return;
   }
 
@@ -2042,7 +2204,7 @@ function handleAdminCsvSelect(ev){
       var headers = results.meta.fields || [];
       var missing = ADMIN_REQUIRED_COLS.filter(function(c){ return headers.indexOf(c) === -1; });
       if (missing.length){
-        resultEl.innerHTML = '<div class="search-status err">หัวคอลัมน์ไม่ครบ ขาด: ' + missing.join(', ') + '</div>';
+        resultEl.innerHTML = '<div class="search-status err">ຫົວຖັນບໍ່ຄົບ ຂາດ: ' + missing.join(', ') + '</div>';
         return;
       }
       var rows = [];
@@ -2060,16 +2222,16 @@ function handleAdminCsvSelect(ev){
         });
       });
       if (!rows.length){
-        resultEl.innerHTML = '<div class="search-status err">ไม่พบแถวข้อมูลที่ใช้ได้ในไฟล์ (ต้องมีเลขบัญชีในคอลัมน์ contract)</div>';
+        resultEl.innerHTML = '<div class="search-status err">ບໍ່ພົບແຖວຂໍ້ມູນທີ່ໃຊ້ໄດ້ໃນໄຟລ໌ (ຕ້ອງມີເລກບັນຊີໃນຖັນ contract)</div>';
         return;
       }
       adminParsedRows = rows;
-      summaryEl.textContent = 'พบ ' + rows.length + ' รายการที่จะเพิ่ม/อัปเดต' +
-        (skipped ? ' (ข้าม ' + skipped + ' แถวที่ไม่มีเลขบัญชี)' : '');
+      summaryEl.textContent = 'ພົບ ' + rows.length + ' ລາຍການທີ່ຈະເພີ່ມ/ອັບເດດ' +
+        (skipped ? ' (ຂ້າມ ' + skipped + ' ແຖວທີ່ບໍ່ມີເລກບັນຊີ)' : '');
       previewBox.style.display = '';
     },
     error: function(err){
-      resultEl.innerHTML = '<div class="search-status err">อ่านไฟล์ไม่สำเร็จ: ' + err.message + '</div>';
+      resultEl.innerHTML = '<div class="search-status err">ອ່ານໄຟລ໌ບໍ່ສຳເລັດ: ' + err.message + '</div>';
     }
   });
 }
@@ -2077,7 +2239,7 @@ function handleAdminCsvSelect(ev){
 async function runAdminUpsert(){
   var resultEl = document.getElementById('adminCsvResult');
   if (!isAdmin()){
-    resultEl.innerHTML = '<div class="search-status err">บัญชีนี้ไม่มีสิทธิ์อัปโหลดข้อมูล</div>';
+    resultEl.innerHTML = '<div class="search-status err">ບັນຊີນີ້ບໍ່ມີສິດອັບໂຫລດຂໍ້ມູນ</div>';
     return;
   }
   if (!adminParsedRows.length) return;
@@ -2095,7 +2257,7 @@ async function runAdminUpsert(){
   var okCount = 0;
   var errMsgs = [];
   for (var b=0; b<batches.length; b++){
-    progEl.textContent = 'กำลังอัปโหลด batch ' + (b+1) + '/' + batches.length + ' (' + batches[b].length + ' แถว)...';
+    progEl.textContent = 'ກຳລັງອັບໂຫລດ batch ' + (b+1) + '/' + batches.length + ' (' + batches[b].length + ' ແຖວ)...';
     try{
       var res = await sbAuth.from('data123').upsert(batches[b], { onConflict: 'contract' });
       if (res.error){ errMsgs.push('batch ' + (b+1) + ': ' + res.error.message); }
@@ -2107,9 +2269,9 @@ async function runAdminUpsert(){
 
   progEl.style.display = 'none';
   btn.disabled = false;
-  var html = '<div class="search-status ok">อัปเดตสำเร็จ ' + okCount + ' / ' + total + ' รายการ</div>';
+  var html = '<div class="search-status ok">ອັບເດດສຳເລັດ ' + okCount + ' / ' + total + ' ລາຍການ</div>';
   if (errMsgs.length){
-    html += '<div class="search-status err" style="margin-top:6px">มีข้อผิดพลาด ' + errMsgs.length + ' batch:<br>' + errMsgs.join('<br>') + '</div>';
+    html += '<div class="search-status err" style="margin-top:6px">ມີຂໍ້ຜິດພາດ ' + errMsgs.length + ' batch:<br>' + errMsgs.join('<br>') + '</div>';
   }
   resultEl.innerHTML = html;
   if (!errMsgs.length){
@@ -2127,20 +2289,46 @@ var sampleCustomers = [
   { CONTRACT:"0330400410000003", CURRENCY:"USD", CUSTOMER:"ລູກຄ້າຕົວຢ່າງ 3", TEL:"020XXXXXXX3", ACCNAME:"ລູກຄ້າຕົວຢ່າງ 3", Addr:"ບ້ານທົດສອບ 3 (DEMO)" }
 ];
 
+// ดึงชื่อช่อง (ภาษาลาว) จากป้ายกำกับบนหน้าจอ — ไม่ต้องมี list ซ้ำในโค้ด
+function fieldLabel(el){
+  var wrap = el.closest ? el.closest(".input-detail") : null;
+  var lab = wrap ? wrap.querySelector(".float-label") : null;
+  return lab ? lab.textContent.trim() : (el.getAttribute("data-field") || "");
+}
+
 function applyHit(block, hit, statusEl, tag){
+  // สำคัญ: ล้างทุกช่องที่มาจากฐานข้อมูลก่อนเติมค่าใหม่เสมอ
+  // ของเดิมข้ามช่องที่ค่าว่าง ทำให้ เบີໂທ/ທີ່ຢູ່/ສະກຸນເງິນ ของลูกค้าคนก่อน
+  // ค้างอยู่แล้วถูกพิมพ์ลงใบบิลของลูกค้าคนใหม่
+  var missingLabels = [];
   block.querySelectorAll("[data-field]").forEach(function(el){
     var key = el.getAttribute("data-field");
-    if(hit[key]){ el.value = hit[key]; el.dispatchEvent(new Event("input")); } // ไม่เขียนทับด้วยค่าว่าง/EMPTY — คงค่าตั้งต้นของฟิลด์ไว้
+    var v = hit[key];
+    if (v){
+      el.value = v;
+    } else if (el.tagName === "SELECT"){
+      el.selectedIndex = 0;   // ไม่มีสกุลเงินในระบบ -> กลับไปค่าเริ่มต้น
+      missingLabels.push(fieldLabel(el));
+    } else {
+      el.value = "";
+      missingLabels.push(fieldLabel(el));
+    }
+    el.dispatchEvent(new Event("input"));
   });
   var missingEssential = !hit.ACCNAME || !hit.TEL || !hit.CURRENCY;
-  if (missingEssential){
-    statusEl.textContent = "ກະລຸນາ ລະບຸຊື່ຜູ້ມອບ ເບີໂທ ແລະ ສະກຸນເງິນ"; statusEl.className = "search-status err";
+  var okMsg = "✓ ພົບຂໍ້ມູນ" + (tag ? " ("+tag+")" : "");
+  if (missingLabels.length){
+    statusEl.textContent = okMsg + "  ⚠ " + missingLabels.join(", ");
+    statusEl.className = "search-status " + (missingEssential ? "err" : "ok");
   } else {
-    statusEl.textContent = "✓ ພົບຂໍ້ມູນ" + (tag ? " ("+tag+")" : ""); statusEl.className = "search-status ok";
+    statusEl.textContent = okMsg;
+    statusEl.className = "search-status ok";
   }
   var curSel = block.querySelector('[data-field="CURRENCY"]');
   if (curSel) onCurrencyChange(curSel);
   recompute();
+  if (typeof saveDraftSoon === "function") saveDraftSoon();
+  if (typeof focusFirstAmount === "function") focusFirstAmount();
 }
 
 function jsonpRequest(url, onData, onError, timeoutMs){
@@ -2176,8 +2364,14 @@ function searchCustomer(btn){
     var esc = q.replace(/[%*]/g, ""); // กันตัวอักษรพิเศษของ pattern matching หลุดเข้าไปใน query
     var filter = "or=(contract.ilike.*" + encodeURIComponent(esc) + "*,customer.ilike.*" + encodeURIComponent(esc) + "*)&contract=not.ilike.*-*";
     var url = SUPABASE_URL + "/rest/v1/data123?select=*&" + filter + "&limit=12";
-    fetch(url, { headers: getAuthHeaders() })
-      .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    sbFetch(url)
+      .then(function(r){
+        if (!r.ok){
+          if (r.status === 401 || r.status === 403) throw new Error("SESSION_EXPIRED");
+          throw new Error("HTTP " + r.status);
+        }
+        return r.json();
+      })
       .then(function(rows){
         if (rows && rows.length){
           var r0 = rows[0];
@@ -2189,6 +2383,13 @@ function searchCustomer(btn){
         }
       })
       .catch(function(err){
+        if (err && err.message === "SESSION_EXPIRED"){
+          statusEl.textContent = "⚠ ກະລຸນາ ເຂົ້າສູ່ລະບົບ (session expired)";
+          statusEl.className = "search-status err";
+          if (typeof saveDraftNow === "function") saveDraftNow();
+          showAuthOverlay();
+          return;
+        }
         statusEl.textContent = "✗ ເຊື່ອມຕໍ່ຂໍ້ມູນບໍ່ໄດ້ (" + err.message + ")"; statusEl.className = "search-status err";
       });
     return;
@@ -2223,11 +2424,34 @@ function searchCustomer(btn){
   }
 }
 
+/* สถานะของแถบแท็บทั้งหมด — ที่เดียวจบ ทั้งแท็บปกติ แท็บแบ่งครึ่ง และหัวกลุ่ม */
+function syncTabs(){
+  var cur = getActivePanelId();
+  document.querySelectorAll(".type-tabs button[data-type]").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-type") === cur);
+  });
+  document.querySelectorAll(".type-tabs .ts-halves button[data-variant]").forEach(function(b){
+    b.classList.toggle("active", cur === "transfer" && b.getAttribute("data-variant") === TRANSFER_VARIANT);
+  });
+  document.querySelectorAll(".tab-split").forEach(function(g){
+    var grp = (g.getAttribute("data-group") || "").split("|");
+    g.classList.toggle("on", grp.indexOf(cur) >= 0);
+  });
+}
+
+/* กดครึ่งใดครึ่งหนึ่งของแท็บ ໃບໂອນ = เข้าแท็บนั้น + เลือกแบบฟอร์มไปพร้อมกัน */
+function pickTransfer(v){
+  setTransferVariant(v);
+  switchType("transfer");
+}
+
 function switchType(type){
-  document.querySelectorAll(".type-tabs button").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-type") === type); });
   document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("active", p.id === "panel-" + type); });
+  syncTabs();
   rebuildDenomRows();
   recompute();
+  if (typeof saveDraftSoon === "function") saveDraftSoon();
+  if (typeof focusActiveSearch === "function" && !DRAFT_LOADING) focusActiveSearch();
 }
 
 /* =========================================================
@@ -2257,6 +2481,32 @@ function getDenomMode(){
   if (id === "deposit_old" || id === "withdraw") return "simple9";
   return "none"; // transfer — ไม่มีช่องแยกธนบัตรในฟอร์มจริง
 }
+/* ---------------------------------------------------------
+   จำค่าที่กรอกในช่องธนบัตร แยกตาม (ประเภทใบ | สกุลเงิน)
+   ป้องกันข้อมูลหายตอนค้นหาลูกค้า / สลับแท็บ / เปลี่ยนสกุลเงิน
+   --------------------------------------------------------- */
+var DENOM_CACHE = {};
+var LAST_DENOM_KEY = null;
+
+function snapshotDenom(){
+  var m = {};
+  document.querySelectorAll('#denom-rows [data-slot]').forEach(function(inp){
+    if (inp.value) m[inp.getAttribute('data-slot')] = inp.value;
+  });
+  var rem = document.getElementById('remainderInput');
+  if (rem && rem.value) m.__rem = rem.value;
+  return m;
+}
+function restoreDenom(m){
+  if (!m) return;
+  document.querySelectorAll('#denom-rows [data-slot]').forEach(function(inp){
+    var v = m[inp.getAttribute('data-slot')];
+    if (v !== undefined) inp.value = v;
+  });
+  var rem = document.getElementById('remainderInput');
+  if (rem && m.__rem !== undefined) rem.value = m.__rem;
+}
+
 function onCurrencyChange(sel){ rebuildDenomRows(); recompute(); }
 
 function rebuildDenomRows(){
@@ -2271,11 +2521,16 @@ function rebuildDenomRows(){
     wrap.style.display = "none";
     if (amtWrap) amtWrap.style.display = "block";
     if (titleEl) titleEl.textContent = "ຍອດໂອນ";
+    if (LAST_DENOM_KEY) DENOM_CACHE[LAST_DENOM_KEY] = snapshotDenom();
+    LAST_DENOM_KEY = null;
     return;
   }
   wrap.style.display = "";
   if (amtWrap) amtWrap.style.display = "none";
   if (titleEl) titleEl.textContent = "ແຍກປະເພດທະນະບັດ";
+  // เก็บค่าที่กรอกไว้ก่อนล้างช่อง แล้วค่อยเติมกลับหลังสร้างช่องใหม่เสร็จ
+  var __key = getActivePanelId() + "|" + cur;
+  if (LAST_DENOM_KEY) DENOM_CACHE[LAST_DENOM_KEY] = snapshotDenom();
   wrap.innerHTML = "";
 
 // ช่องที่ไม่ได้ใช้งานจริง — ซ่อนออกจากหน้าจอ (ตำแหน่งพิมพ์ยังคงเดิม ถ้าไม่มีค่าก็พิมพ์ "-" เหมือนเดิม)
@@ -2331,6 +2586,10 @@ var UI_HIDDEN_SLOTS = { LAK: [8,9,10,11,12,13,14,15] }; // 200,100,50,20,10,5,2,
       recompute();
     });
   });
+
+  // เติมค่าเดิมกลับ (ถ้าเคยกรอกไว้สำหรับใบ+สกุลเงินนี้)
+  restoreDenom(DENOM_CACHE[__key]);
+  LAST_DENOM_KEY = __key;
 }
 
 function getDenomSubtotals(){
@@ -2363,6 +2622,29 @@ function recompute(){
   var sym = CURRENCY_SYMBOL[d.cur] || "";
   document.getElementById("totalNumber").textContent = total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + sym;
   document.getElementById("totalText").textContent = total > 0 ? laoMoneyText(total, d.cur) : "—";
+  updateExpectedCheck(total, sym);
+}
+
+/* เทียบยอดที่แยกธนบัตรได้ กับยอดที่ลูกค้าแจ้งไว้ — เตือนทันทีถ้าไม่ตรง
+   (ช่องนี้เป็นตัวช่วยของ teller เท่านั้น ไม่ถูกพิมพ์ลงใบบิล) */
+function updateExpectedCheck(total, sym){
+  var wrap = document.getElementById("expectedWrap");
+  var box  = document.getElementById("expectedCheck");
+  if (!wrap || !box) return;
+  if (getDenomMode() === "none"){ wrap.style.display = "none"; box.style.display = "none"; return; }
+  wrap.style.display = "";
+  var inp = document.getElementById("expectedAmount");
+  var exp = parseFloat((inp && inp.value ? inp.value : "").replace(/,/g, ""));
+  if (!inp || !inp.value || isNaN(exp) || exp <= 0){ box.style.display = "none"; return; }
+  var diff = Math.round((total - exp) * 100) / 100;
+  box.style.display = "block";
+  if (Math.abs(diff) < 0.005){
+    box.textContent = "✓ ຖືກຕ້ອງ";
+    box.style.color = "var(--bp-ok)";
+  } else {
+    box.textContent = (diff < 0 ? "⚠ ຂາດ " : "⚠ ເກີນ ") + fmtAmount(Math.abs(diff)) + sym;
+    box.style.color = "var(--bp-danger)";
+  }
 }
 
 /* =========================================================
@@ -2388,18 +2670,19 @@ function fmtAmount(n){
 
 // ---------- ໃບມອບ (ใหม่) ----------
 var BASE_POS = {
-  customer: {x:0.00,   y:26.25,  w:284.21, h:23.25, va:'flex-end'},
-  tel:      {x:317.74, y:26.25,  w:88.91,  h:23.25, va:'flex-end'},
-  addr:     {x:0.00,   y:49.50,  w:205.51, h:24.75, va:'flex-end'},
-  accname:  {x:109.31, y:110.25, w:297.33, h:33.00, va:'flex-end'},
-  contract: {x:109.31, y:143.25, w:297.33, h:35.25, va:'center'},
-  cur:      {x:0.00,   y:178.50, w:109.31, h:18.75, va:'flex-start'},
-  amount:   {x:109.31, y:178.50, w:208.42, h:18.75, va:'flex-start'},
-  curword:  {x:317.74, y:178.50, w:88.91,  h:18.75, va:'flex-start'},
-  words:    {x:0.00,   y:197.25, w:406.64, h:18.75, va:'flex-end', wrap:true},
-  desc:     {x:109.31, y:216.00, w:297.33, h:18.75, va:'flex-start'}
+  customer: {x:8.49,   y:26.25,  w:284.21, h:23.25, va:'flex-end'},
+  tel:      {x:326.23, y:26.25,  w:88.91,  h:23.25, va:'flex-end'},
+  addr:     {x:8.49,   y:49.50,  w:205.51, h:24.75, va:'flex-end'},
+  accname:  {x:117.80, y:110.25, w:297.33, h:33.00, va:'flex-end'},
+  contract: {x:117.80, y:143.25, w:297.33, h:35.25, va:'center'},
+  cur:      {x:8.49,   y:178.50, w:109.31, h:18.75, va:'flex-start'},
+  amount:   {x:117.80, y:178.50, w:208.42, h:18.75, va:'flex-start'},
+  curword:  {x:326.23, y:178.50, w:88.91,  h:18.75, va:'flex-start'},
+  words:    {x:8.49,   y:197.25, w:406.64, h:18.75, va:'flex-end', wrap:true},
+  desc:     {x:117.80, y:216.00, w:297.33, h:18.75, va:'flex-start'},
+  date:     {x:454.49, y:-16.50, w:84.53,  h:20.25, va:'center'}
 };
-var DENOM_BASE = { x:446.0, w:84.53 };
+var DENOM_BASE = { x:454.49, w:84.53 };
 // J2..J17 = sheet rows 2..17 — ตำแหน่งคงที่ ไม่ขึ้นกับสะกุลเงิน
 var DENOM_ROW_TOPS = [26.25,49.5,74.25,91.5,110.25,125.25,143.25,159.75,178.5,197.25,216.0,234.75,253.5,272.25,291.0,309.75,329.25];
 var DENOM_ROW_H    = [23.25,24.75,17.25,18.75,15.0,18.0,16.5,18.75,18.75,18.75,18.75,18.75,18.75,18.75,18.75,19.5,19.5];
@@ -2417,7 +2700,8 @@ var BASE_POS_OLD = {
   words:    {x:0.00,   y:189.00, w:407.37, h:20.25, va:'flex-end', wrap:true},
   desc:     {x:109.31, y:209.25, w:298.06, h:39.00, va:'center'},
   total:    {x:452.55, y:209.25, w:84.54,  h:39.00, va:'center'},
-  symbol:   {x:537.09, y:209.25, w:29.15,  h:39.00, va:'center'}
+  symbol:   {x:525.77, y:209.25, w:29.15,  h:39.00, va:'center'},
+  date:     {x:452.55, y:-16.50, w:84.54,  h:20.25, va:'center'}
 };
 var DENOM_BASE_OLD_LABEL = { x:407.37, w:45.18 };
 var DENOM_BASE_OLD = { x:452.55, w:84.54 };
@@ -2435,7 +2719,8 @@ var BASE_POS_WD = {
   cur:      {x:0.00,  y:129.40, w:75.79,  h:21.75, va:'flex-end'},
   amount:   {x:126.07,y:129.40, w:100.57, h:21.75, va:'flex-start'},
   curword:  {x:226.64,y:129.40, w:130.45, h:21.75, va:'flex-start'},
-  words:    {x:75.79, y:151.15, w:281.30, h:23.25, va:'flex-end', wrap:true}
+  words:    {x:75.79, y:151.15, w:281.30, h:23.25, va:'flex-end', wrap:true},
+  date:     {x:393.01, y:-16.50, w:86.00,  h:20.25, va:'center'}
 };
 var DENOM_BASE_WD_LABEL = { x:339.09, w:53.92 };
 var DENOM_BASE_WD = { x:393.01, w:86.0 };
@@ -2446,7 +2731,7 @@ var DENOM_ROW_H_WD    = [15.0,21.0,18.75,15.75,19.15,21.75,23.25,18.75,18.75];
 var BASE_POS_TR = {
   from_customer:{x:105.67, y:25.50,  w:249.23, h:21.75, va:'flex-end'},
   from_tel:     {x:423.40, y:25.50,  w:115.14, h:21.75, va:'flex-end'},
-  from_addr:    {x:58.30,  y:47.25,  w:47.37,  h:21.00, va:'flex-end'},
+  from_addr:    {x:100.83, y:47.25,  w:249.23, h:21.00, va:'flex-end'},
   nps_accname:  {x:310.45, y:68.25,  w:228.10, h:43.50, va:'center'},
   cheque_no:    {x:105.67, y:111.75, w:145.75, h:19.50, va:'flex-end'},
   nps_accnum:   {x:354.90, y:111.75, w:183.64, h:19.50, va:'flex-end'},
@@ -2460,8 +2745,37 @@ var BASE_POS_TR = {
   amount:       {x:169.80, y:223.50, w:140.65, h:21.75, va:'flex-start'},
   curword:      {x:310.45, y:223.50, w:44.45,  h:21.75, va:'flex-start'},
   words:        {x:105.67, y:246.00, w:249.23, h:19.50, va:'flex-end', wrap:true},
-  desc:         {x:105.67, y:265.50, w:249.23, h:19.50, va:'center'}
+  desc:         {x:105.67, y:265.50, w:249.23, h:19.50, va:'center'},
+  date:         {x:423.40, y:-16.50, w:115.14, h:20.25, va:'center'}
 };
+
+/* ໃບໂອນ ແບບໃໝ່ — เริ่มจากพิกัดเดียวกับแบบเก่า แล้วให้ admin ลาก/เลื่อน
+   ให้ตรงกระดาษใหม่เอง (ค่าที่ปรับเก็บแยกกันคนละชุดกับแบบเก่า) */
+var BASE_POS_TR2 = JSON.parse(JSON.stringify(BASE_POS_TR));
+
+var TRANSFER_VARIANT_KEY = "ez_transfer_variant";
+var TRANSFER_VARIANT = "old";
+
+function setTransferVariant(v){
+  TRANSFER_VARIANT = (v === "new") ? "new" : "old";
+  try{ localStorage.setItem(TRANSFER_VARIANT_KEY, TRANSFER_VARIANT); }catch(e){}
+  if (typeof syncTabs === "function") syncTabs();
+  // ถ้ากำลังเปิด Preview อยู่ ให้สลับให้เห็นทันที
+  var ov = document.getElementById("previewOverlay");
+  if (ov && ov.classList.contains("open") && /^transfer/.test(CALIB_TYPE)){
+    openPreview(CALIB_MODE);
+  }
+}
+function initTransferVariant(){
+  var v = "old";
+  try{ v = localStorage.getItem(TRANSFER_VARIANT_KEY) || "old"; }catch(e){}
+  setTransferVariant(v);
+}
+/* แปลงชื่อแท็บ -> ชื่อแบบพิมพ์ที่จะใช้จริง */
+function printLayoutFor(type){
+  if (type === "transfer" && TRANSFER_VARIANT === "new") return "transfer2";
+  return type;
+}
 
 var FIELD_LABELS = {
   page:'Whole page', customer:'Customer name', tel:'Phone', addr:'Address', addr1:'Address', addr2:'Address (2)',
@@ -2471,13 +2785,13 @@ var FIELD_LABELS = {
   from_accname:'Account name (sender)', from_contract:'Account no. (sender)',
   to_accname:'Account name (receiver)', to_contract:'Account no. (receiver)',
   nps_accname:'NPS account name', nps_accnum:'NPS account no.', nps_bank:'NPS bank',
-  cheque_no:'Cheque no.', cheque_date:'Cheque date'
+  cheque_no:'Cheque no.', cheque_date:'Cheque date', date:'Date (วันที่พิมพ์)'
 };
 
 var STORE_KEY = 'ezteller_print_calib_v2';
 var PAGE_OFFSET = {};   // {deposit:{x,y}, deposit_old:{x,y}, withdraw:{x,y}, transfer:{x,y}}
 var FIELD_OFFSETS = {}; // {deposit:{customer:{x,y},...}, ...}
-var PRINT_TYPES = ['deposit','deposit_old','withdraw','transfer'];
+var PRINT_TYPES = ['deposit','deposit_old','withdraw','transfer','transfer2'];
 
 /* =========================================================
    ตำแหน่งพิมพ์ (calibration) — sync ผ่าน Supabase (ตาราง print_calib
@@ -2536,9 +2850,72 @@ function fetchCloudCalib(force){
     .catch(function(){ /* ออฟไลน์/เน็ตหลุด — ใช้ค่า local ต่อไปเงียบๆ */ });
 }
 
+/* วางค่าตำแหน่งพิมพ์กลับ (backup / ย้ายเครื่อง) — เฉพาะ admin
+   ใช้ applyCalibData ตัวเดิมที่ใช้ตอนดึงจาก cloud จึงได้ผลเหมือนกันเป๊ะ */
+function importCalib(){
+  var box = document.getElementById('calibImportBox');
+  var st  = document.getElementById('calibImportStatus');
+  if (!box || !st) return;
+  st.style.display = '';
+
+  if (!isAdmin()){
+    st.innerHTML = '<span style="color:var(--bp-danger)">' + 'ບັນຊີນີ້ບໍ່ມີສິດອັບໂຫລດຂໍ້ມູນ' + '</span>';
+    return;
+  }
+  var raw = String(box.value || '').trim();
+  if (!raw){ st.innerHTML = '<span style="color:var(--bp-danger)">❌ empty</span>'; return; }
+
+  var data;
+  try{ data = JSON.parse(raw); }
+  catch(e){ st.innerHTML = '<span style="color:var(--bp-danger)">❌ JSON error: ' + esc(e.message) + '</span>'; return; }
+  if (!data || typeof data !== 'object' || (!data.pages && !data.fields)){
+    st.innerHTML = '<span style="color:var(--bp-danger)">❌ ไม่พบ pages / fields ในข้อมูลที่วาง</span>';
+    return;
+  }
+
+  var n = 0;
+  PRINT_TYPES.forEach(function(t){
+    if (data.fields && data.fields[t]) n += Object.keys(data.fields[t]).length;
+  });
+  if (!confirm('จะทับค่าตำแหน่งพิมพ์ปัจจุบันทั้งหมดด้วยค่าที่วางมา (' + n + ' ช่อง) และส่งขึ้น cloud ให้ทุกเครื่อง — ยืนยัน?')) return;
+
+  applyCalibData(data);
+  saveCalib();              // เซฟลงเครื่อง + push ขึ้น cloud (เช็ค isAdmin ซ้ำอยู่แล้ว)
+  applyPageOffset();
+  if (typeof refreshPreview === 'function') refreshPreview();
+  st.innerHTML = '<span style="color:var(--bp-ok)">✅ ອັບເດດສຳເລັດ — ' + n + ' fields</span>';
+}
+
 function useCloudCalib(){
   if (!confirm('ล้างตำแหน่งพิมพ์ที่ปรับไว้ในเครื่องนี้ แล้วใช้ตามที่ Admin ตั้งค่าไว้ล่าสุดแทน?')) return;
   fetchCloudCalib(true);
+}
+
+function showCalibExport(){
+  var box = document.getElementById('calibExportBox');
+  var statusEl = document.getElementById('calibExportStatus');
+  if (!box) return;
+  var json = JSON.stringify({ pages: PAGE_OFFSET, fields: FIELD_OFFSETS }, null, 2);
+  box.value = json;
+  box.style.display = '';
+  statusEl.style.display = '';
+
+  function reportCopy(ok){
+    statusEl.textContent = ok
+      ? '✅ ກັອບໄປແລ້ວ — ພິມ (paste) ສົ່ງໃຫ້ NANA ໄດ້ເລີຍ'
+      : '⚠️ ກັອບອັດຕະໂນມັດບໍ່ໄດ້ — ເລືອກຂໍ້ຄວາມລຸ່ມນີ້ແລ້ວກົດ Ctrl+C ເອງ';
+  }
+
+  function fallbackCopy(){
+    box.focus(); box.select();
+    try{ reportCopy(document.execCommand('copy')); }catch(e){ reportCopy(false); }
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(json).then(function(){ reportCopy(true); }).catch(fallbackCopy);
+  } else {
+    fallbackCopy();
+  }
 }
 
 function saveCalib(){
@@ -2587,6 +2964,7 @@ function buildDepositGrid(){
   var desc = getDescValue("deposit");
 
   var values = {
+    date: esc(billDateStr()),
     customer:esc(customer), tel:esc(tel), addr:esc(addr), accname:esc(accname),
     contract:esc(contract), cur:esc(cur), amount:fmtAmount(total),
     curword:esc(curWord), words:esc(words), desc:esc(desc)
@@ -2652,6 +3030,7 @@ function buildOldDepositGrid(){
   var desc = getDescValue("deposit_old");
 
   var values = {
+    date: esc(billDateStr()),
     customer:esc(customer), tel:esc(tel), addr:esc(addr), accname:esc(accname),
     contract:esc(contract), cur:esc(cur), amount:fmtAmount(total),
     curword:esc(curWord), words:esc(words), desc:esc(desc),
@@ -2686,8 +3065,15 @@ function buildWithdrawGrid(){
   var curWord = (CURRENCY_WORDS[cur]||CURRENCY_WORDS.LAK).main;
   var words = total > 0 ? laoMoneyText(total, cur) : "";
 
+  // ใบถอน: ช่องบนของฟอร์มจริงคือ "ຊື່ບັນຊີ" ช่องล่างคือ "ຊື່ຜູ້ຖອນ"
+  // (slot ชื่อ accname = แถวบน, slot ชื่อ customer = แถวล่าง — ชื่อ slot คงไว้
+  //  เพื่อไม่ให้ค่าตำแหน่งพิมพ์ที่ปรับไว้แล้วหลุด)
   var values = {
-    accname:esc(accname), addr1:esc(addr), tel:esc(tel), customer:esc(customer), addr2:esc(addr),
+    date: esc(billDateStr()),
+    accname:esc(customer),               // แถวบน  = ຊື່ບັນຊີ (จากฐานข้อมูล)
+    addr1:esc(addr), tel:esc(tel),
+    customer:esc(accname),               // แถวล่าง = ຊື່ຜູ້ຖອນ (teller กรอกเอง)
+    addr2:esc(addr),
     contract:esc(contract), cur:esc(cur), amount:fmtAmount(total), curword:esc(curWord), words:esc(words)
   };
   var origin = renderFieldsToOrigin('withdrawOrigin', BASE_POS_WD, values);
@@ -2726,6 +3112,7 @@ function buildTransferGrid(){
   var chequeOn = document.getElementById('cheque-sub-body') && document.getElementById('cheque-sub-body').classList.contains('open');
 
   var values = {
+    date: esc(billDateStr()),
     from_customer: esc(document.getElementById('transferOrderer').value || fieldVal(fromB,"CUSTOMER")),
     from_tel:      esc(fieldVal(fromB,"TEL")),
     from_addr:     esc(fieldVal(fromB,"Addr")),
@@ -2741,7 +3128,11 @@ function buildTransferGrid(){
     cheque_no:   chequeOn ? esc(document.getElementById('chequeNo').value) : "",
     cheque_date: chequeOn ? esc(document.getElementById('chequeDate').value) : ""
   };
-  renderFieldsToOrigin('transferOrigin', BASE_POS_TR, values);
+  if (CALIB_TYPE === 'transfer2'){
+    renderFieldsToOrigin('transfer2Origin', BASE_POS_TR2, values);
+  } else {
+    renderFieldsToOrigin('transferOrigin', BASE_POS_TR, values);
+  }
 }
 
 /* ===================== Preview + Calibration ===================== */
@@ -2754,11 +3145,13 @@ var PRINT_BUILDERS = {
   deposit: buildDepositGrid,
   deposit_old: buildOldDepositGrid,
   withdraw: buildWithdrawGrid,
-  transfer: buildTransferGrid
+  transfer: buildTransferGrid,
+  transfer2: buildTransferGrid      // ฟอร์มเดียวกัน คนละ layout
 };
 var PRINT_PAGE_IDS = {
   deposit: 'printPage-deposit', deposit_old: 'printPage-deposit_old',
-  withdraw: 'printPage-withdraw', transfer: 'printPage-transfer'
+  withdraw: 'printPage-withdraw', transfer: 'printPage-transfer',
+  transfer2: 'printPage-transfer2'
 };
 function buildActiveGrid(type){
   CALIB_TYPE = type;
@@ -2778,7 +3171,7 @@ function fitPreviewScale(){
 function openPreview(calib){
   CALIB_MODE = !!calib;
   recompute();
-  var type = getActivePanelId();
+  var type = printLayoutFor(getActivePanelId());
   buildActiveGrid(type);
   var src = document.getElementById(PRINT_PAGE_IDS[type] || 'printPage-deposit');
   var stage = document.getElementById('previewStage');
@@ -2793,7 +3186,7 @@ function openPreview(calib){
   document.getElementById('previewTitle').innerHTML = CALIB_MODE
     ? '<i class="fa-solid fa-up-down-left-right"></i> ປັບຕຳແໜ່ງພິມ — ກົດເລືອກຊ່ອງ ຫຼື ປັບທັງໜ້າ'
     : '<i class="fa-solid fa-eye"></i> ຕົວຢ່າງກ່ອນພິມ';
-  if (CALIB_MODE){ selectTarget('page'); bindFieldClicks(); }
+  if (CALIB_MODE){ selectTarget('page'); bindFieldClicks(); bindFieldDrag(); }
 }
 
 function printFromPreview(){
@@ -2806,6 +3199,43 @@ function closePreview(){
   document.getElementById('previewOverlay').classList.remove('open');
   document.getElementById('calibBar').style.display = 'none';
   CALIB_MODE = false;
+}
+
+/* ลากช่องด้วยเมาส์ได้เลยในโหมดปรับตำแหน่งพิมพ์ — จัดฟอร์มใหม่ทั้งใบได้เร็วกว่ากดลูกศรทีละครั้ง */
+function bindFieldDrag(){
+  var stage = document.getElementById('previewStage');
+  stage.querySelectorAll('.pf').forEach(function(el){
+    el.addEventListener('mousedown', function(ev){
+      if (!CALIB_MODE) return;
+      ev.preventDefault();
+      var name = el.getAttribute('data-field');
+      selectTarget(name);
+      var t = CALIB_TYPE;
+      if (!FIELD_OFFSETS[t]) FIELD_OFFSETS[t] = {};
+      var cur = FIELD_OFFSETS[t][name] || {x:0, y:0};
+      var sx = ev.clientX, sy = ev.clientY;
+      var baseL = parseFloat(el.style.left) || 0;
+      var baseT = parseFloat(el.style.top)  || 0;
+      var scale = PREVIEW_SCALE || 1;
+      var dxPt = 0, dyPt = 0;
+      function onMove(e2){
+        dxPt = (e2.clientX - sx) / scale * 0.75;   // px (96dpi) -> pt
+        dyPt = (e2.clientY - sy) / scale * 0.75;
+        el.style.left = (baseL + dxPt) + 'pt';
+        el.style.top  = (baseT + dyPt) + 'pt';
+      }
+      function onUp(){
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (Math.abs(dxPt) < 0.2 && Math.abs(dyPt) < 0.2) return;  // แค่คลิกเลือก ไม่ได้ลาก
+        FIELD_OFFSETS[t][name] = { x: +(cur.x + dxPt).toFixed(2), y: +(cur.y + dyPt).toFixed(2) };
+        saveCalib();
+        refreshPreview();
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
 }
 
 function bindFieldClicks(){
@@ -2840,7 +3270,7 @@ function refreshPreview(){
   var clone = src.cloneNode(true);
   clone.style.display = 'block';
   stage.appendChild(clone);
-  if (CALIB_MODE){ bindFieldClicks(); selectTarget(sel); }
+  if (CALIB_MODE){ bindFieldClicks(); bindFieldDrag(); selectTarget(sel); }
 }
 
 function nudge(dx, dy){
@@ -2898,17 +3328,424 @@ document.addEventListener('keydown', function(e){
 
 function esc(s){ var d=document.createElement("div"); d.textContent = s==null?"":s; return d.innerHTML; }
 
+/* เตือน (ไม่บล็อก) ถ้าใบยังไม่ครบ — ไม่มีเลขบัญชี / ไม่มีชื่อ / ยอดเป็น 0 */
+function printPrecheck(type){
+  var panel = document.getElementById("panel-" + type);
+  if (!panel) return true;
+  var probs = [];
+  panel.querySelectorAll('.account-block [data-field="CONTRACT"], .account-block [data-field="CUSTOMER"]').forEach(function(el){
+    if (!String(el.value || "").trim()) probs.push(fieldLabel(el));
+  });
+  var d = getDenomSubtotals();
+  var total = d.subtotals.reduce(function(a,b){ return a+b; }, 0);
+  if (!(total > 0)){
+    var lab = document.querySelector(".total-number .lao");
+    probs.push((lab ? lab.textContent.trim() : "total") + " = 0");
+  }
+  if (!probs.length) return true;
+  var btn = panel.querySelector(".print-btn");
+  var ask = btn ? btn.textContent.trim() : "print";
+  return confirm("⚠ " + probs.join("\n⚠ ") + "\n\n" + ask + " ?");
+}
+
 function doPrint(type){
+  if (!printPrecheck(type)) return;    // type = ชื่อแท็บ
+  var layout = printLayoutFor(type);   // layout = แบบพิมพ์ที่เลือกไว้
   recompute();
   PRINT_TYPES.forEach(function(t){
     var el = document.getElementById(PRINT_PAGE_IDS[t]);
     if (el) el.style.display = "none";
   });
-  buildActiveGrid(type);
-  var pageId = PRINT_PAGE_IDS[type] || 'printPage-deposit';
+  buildActiveGrid(layout);
+  var pageId = PRINT_PAGE_IDS[layout] || 'printPage-deposit';
   document.getElementById(pageId).style.display = "block";
   setTimeout(function(){ window.print(); }, 30);
 }
+
+
+/* =========================================================
+   DRAFT AUTOSAVE — เก็บทุกอย่างที่กรอกในฟอร์มลง localStorage
+   แยกตาม teller ที่ล็อกอิน. reload / ปิดแท็บ / โดนดีดออก
+   แล้วกลับเข้ามา ข้อมูลยังอยู่ครบ
+   ========================================================= */
+var DRAFT_KEY_BASE = "ez_draft_v1";
+var DRAFT_MAX_AGE_MS = 12 * 60 * 60 * 1000; // เกิน 12 ชม. ถือว่าเก่าเกิน ไม่กู้คืน
+var DRAFT_LOADING = false;
+var draftTimer = null;
+
+var LAST_TELLER_EMAIL = null;
+function draftKey(){
+  var em = (currentSession && currentSession.user && currentSession.user.email) || null;
+  if (em) LAST_TELLER_EMAIL = em;
+  // ถ้า session เพิ่งถูกล้าง (token หมดอายุ) ยังใช้ key ของ teller คนเดิม
+  // ไม่งั้น draft จะไปตกอยู่ใต้ key "anon" แล้วกู้กลับไม่เจอตอน login ใหม่
+  return DRAFT_KEY_BASE + ":" + (em || LAST_TELLER_EMAIL || "anon");
+}
+
+function collectDraft(){
+  var d = { type: getActivePanelId(), fields: {}, misc: {}, denom: null, ts: Date.now() };
+  document.querySelectorAll("#viewBill .panel").forEach(function(p){
+    p.querySelectorAll(".account-block").forEach(function(b){
+      var role = b.getAttribute("data-role") || "single";
+      b.querySelectorAll("[data-field]").forEach(function(el){
+        d.fields[p.id + "|" + role + "|" + el.getAttribute("data-field")] = el.value;
+      });
+      var si = b.querySelector(".search-input");
+      if (si) d.fields[p.id + "|" + role + "|__q"] = si.value;
+    });
+  });
+  ["descSelect-deposit","descSelect-deposit_old","descSelect-transfer",
+   "descCustom-deposit","descCustom-deposit_old","descCustom-transfer",
+   "chequeNo","chequeDate","singleAmount","expectedAmount","billDate"].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) d.misc[id] = el.value;
+  });
+  var cq = document.querySelector("#panel-transfer .nps-toggle input[type=checkbox]");
+  if (cq) d.misc.__cheque = cq.checked;
+  if (LAST_DENOM_KEY) DENOM_CACHE[LAST_DENOM_KEY] = snapshotDenom();
+  d.denom = DENOM_CACHE;
+  return d;
+}
+
+function draftIsEmpty(d){
+  var k;
+  for (k in d.fields) if (d.fields[k]) return false;
+  for (k in d.misc) if (d.misc[k] && k !== "__cheque") return false;
+  for (k in d.denom) for (var s2 in d.denom[k]) if (d.denom[k][s2]) return false;
+  return true;
+}
+
+function saveDraftNow(){
+  if (DRAFT_LOADING) return;
+  try{
+    var d = collectDraft();
+    if (draftIsEmpty(d)) { localStorage.removeItem(draftKey()); return; }
+    localStorage.setItem(draftKey(), JSON.stringify(d));
+  }catch(e){ /* localStorage เต็ม/ปิดอยู่ — ไม่เป็นไร ใช้งานต่อได้ */ }
+}
+function saveDraftSoon(){
+  if (DRAFT_LOADING) return;
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveDraftNow, 400);
+}
+function clearDraft(){
+  try{ localStorage.removeItem(draftKey()); }catch(e){}
+}
+
+function showDraftBar(ts){
+  var bar = document.getElementById("draftBar");
+  var txt = document.getElementById("draftBarText");
+  if (!bar || !txt) return;
+  var t = new Date(ts);
+  var hh = ("0"+t.getHours()).slice(-2), mm = ("0"+t.getMinutes()).slice(-2);
+  txt.textContent = " ກູ້ຄືນຂໍ້ມູນທີ່ຄ້າງໄວ້ (ບັນທຶກ " + hh + ":" + mm + ")";
+  bar.style.display = "block";
+}
+function hideDraftBar(){
+  var bar = document.getElementById("draftBar");
+  if (bar) bar.style.display = "none";
+}
+
+function restoreDraft(){
+  var raw = null, usedAnon = false;
+  try{
+    raw = localStorage.getItem(draftKey());
+    if (!raw){ raw = localStorage.getItem(DRAFT_KEY_BASE + ":anon"); usedAnon = !!raw; }
+  }catch(e){ return; }
+  if (!raw) return;
+  if (usedAnon){ try{ localStorage.removeItem(DRAFT_KEY_BASE + ":anon"); }catch(e){} }
+  var d = null;
+  try{ d = JSON.parse(raw); }catch(e){ clearDraft(); return; }
+  if (!d || !d.ts || (Date.now() - d.ts) > DRAFT_MAX_AGE_MS){ clearDraft(); return; }
+
+  DRAFT_LOADING = true;
+  try{
+    if (d.type) switchType(d.type);
+    Object.keys(d.fields || {}).forEach(function(k){
+      var parts = k.split("|");
+      var block = document.querySelector("#" + parts[0] + " .account-block[data-role=\"" + parts[1] + "\"]");
+      if (!block) return;
+      var el = (parts[2] === "__q")
+        ? block.querySelector(".search-input")
+        : block.querySelector('[data-field="' + parts[2] + '"]');
+      if (el && d.fields[k]) el.value = d.fields[k];
+    });
+    Object.keys(d.misc || {}).forEach(function(id){
+      if (id === "__cheque"){
+        var cq = document.querySelector("#panel-transfer .nps-toggle input[type=checkbox]");
+        var body = document.getElementById("cheque-sub-body");
+        if (cq){ cq.checked = !!d.misc.__cheque; if (body) body.classList.toggle("open", cq.checked); }
+        return;
+      }
+      var el = document.getElementById(id);
+      if (el && d.misc[id]) el.value = d.misc[id];
+    });
+    ["deposit","deposit_old","transfer"].forEach(function(t){
+      var sel = document.getElementById("descSelect-" + t);
+      if (sel) onDescChange(sel, t);
+    });
+    DENOM_CACHE = d.denom || {};
+    LAST_DENOM_KEY = null;
+    rebuildDenomRows();
+    recompute();
+    showDraftBar(d.ts);
+  } finally {
+    DRAFT_LOADING = false;
+  }
+}
+
+function clearForm(){
+  if (!confirm("ລ້າງຂໍ້ມູນທັງໝົດໃນຟອມນີ້ ແລະ ເລີ່ມໃບໃໝ່ບໍ?")) return;
+  DRAFT_LOADING = true;
+  document.querySelectorAll("#viewBill .panel").forEach(function(p){
+    p.querySelectorAll("[data-field]").forEach(function(el){
+      if (el.tagName === "SELECT") el.selectedIndex = 0; else el.value = "";
+    });
+    p.querySelectorAll(".search-input").forEach(function(el){ el.value = ""; });
+    p.querySelectorAll(".search-status").forEach(function(el){ el.textContent = ""; el.className = "search-status"; });
+  });
+  ["descCustom-deposit","descCustom-deposit_old","descCustom-transfer",
+   "chequeNo","chequeDate","singleAmount","expectedAmount"].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = "";
+  });
+  ["deposit","deposit_old","transfer"].forEach(function(t){
+    var sel = document.getElementById("descSelect-" + t);
+    if (sel){ sel.selectedIndex = 0; onDescChange(sel, t); }
+  });
+  var cq = document.querySelector("#panel-transfer .nps-toggle input[type=checkbox]");
+  var body = document.getElementById("cheque-sub-body");
+  if (cq){ cq.checked = false; if (body) body.classList.remove("open"); }
+  DENOM_CACHE = {};
+  LAST_DENOM_KEY = null;
+  initBillDate(true);          // ใบใหม่ = วันที่วันนี้เสมอ
+  rebuildDenomRows();
+  recompute();
+  DRAFT_LOADING = false;
+  focusActiveSearch();
+  clearDraft();
+  hideDraftBar();
+}
+
+function onBillMutate(e){
+  if (DRAFT_LOADING) return;
+  var t = e.target;
+  if (!t || !t.closest) return;
+  if (!t.closest("#viewBill")) return;
+  saveDraftSoon();
+}
+document.addEventListener("input", onBillMutate, true);
+document.addEventListener("change", onBillMutate, true);
+window.addEventListener("beforeunload", function(){ saveDraftNow(); });
+
+
+/* =========================================================
+   DROPDOWN ເນື້ອໃນ — เดิมใช้ popup ของ browser ซึ่งบางเครื่อง
+   เลื่อนขึ้นลงไม่ได้เมื่อรายการยาวเกินพื้นที่ที่เหลือบนจอ
+   ตัวนี้วาด list เองในหน้าเว็บ (position:fixed) จึง scroll ได้เสมอ
+   ตัว <select> เดิมยังอยู่ครบ โค้ดส่วนอื่นอ่านค่าจากมันได้เหมือนเดิม
+   ========================================================= */
+function enhanceSelect(sel){
+  if (!sel || sel.__dd) return;
+  sel.__dd = true;
+  sel.style.display = "none";
+
+  var wrap = sel.parentNode;
+  var btn  = document.createElement("button");
+  btn.type = "button";
+  btn.className = "form-select dd-btn";
+  wrap.insertBefore(btn, sel);
+
+  var list = document.createElement("div");
+  list.className = "dd-list";
+  document.body.appendChild(list);   // ออกนอกการ์ด กันโดน overflow:hidden ตัด
+
+  var activeIdx = -1;
+
+  function sync(){
+    var op = sel.options[sel.selectedIndex];
+    btn.textContent = op ? op.textContent : "";
+  }
+  function render(){
+    list.innerHTML = "";
+    Array.prototype.forEach.call(sel.options, function(op, i){
+      var it = document.createElement("div");
+      it.className = "dd-item" + (i === sel.selectedIndex ? " sel" : "") + (i === activeIdx ? " active" : "");
+      it.textContent = op.textContent;
+      it.addEventListener("click", function(){ pick(i); });
+      list.appendChild(it);
+    });
+  }
+  function place(){
+    var r = btn.getBoundingClientRect();
+    list.style.left  = r.left + "px";
+    list.style.width = r.width + "px";
+    var below = window.innerHeight - r.bottom - 12;
+    var above = r.top - 12;
+    if (below < 170 && above > below){          // พื้นที่ข้างล่างไม่พอ -> เปิดขึ้นบน
+      list.style.top = "auto";
+      list.style.bottom = (window.innerHeight - r.top + 5) + "px";
+      list.style.maxHeight = Math.max(120, Math.min(280, above)) + "px";
+    } else {
+      list.style.bottom = "auto";
+      list.style.top = (r.bottom + 5) + "px";
+      list.style.maxHeight = Math.max(120, Math.min(280, below)) + "px";
+    }
+  }
+  function isOpen(){ return list.classList.contains("open"); }
+  function open(){
+    closeAllDd();
+    activeIdx = sel.selectedIndex;
+    render();
+    list.classList.add("open");
+    btn.classList.add("open");
+    place();
+    var cur = list.querySelector(".dd-item.sel");
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest" });
+  }
+  function close(){
+    list.classList.remove("open");
+    btn.classList.remove("open");
+  }
+  function pick(i){
+    sel.selectedIndex = i;
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    close();
+    btn.focus();
+  }
+  function move(d){
+    if (!isOpen()){ open(); return; }
+    activeIdx = Math.max(0, Math.min(sel.options.length - 1, activeIdx + d));
+    render();
+    var el = list.children[activeIdx];
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+  }
+
+  btn.addEventListener("click", function(e){ e.stopPropagation(); isOpen() ? close() : open(); });
+  btn.addEventListener("keydown", function(e){
+    if (e.key === "ArrowDown"){ e.preventDefault(); move(1); }
+    else if (e.key === "ArrowUp"){ e.preventDefault(); move(-1); }
+    else if (e.key === "Enter" || e.key === " "){
+      e.preventDefault();
+      if (isOpen() && activeIdx >= 0) pick(activeIdx); else open();
+    } else if (e.key === "Escape"){ close(); }
+  });
+  list.addEventListener("wheel", function(e){ e.stopPropagation(); }, { passive: true });
+  window.addEventListener("resize", function(){ if (isOpen()) place(); });
+  window.addEventListener("scroll", function(e){
+    if (!isOpen()) return;
+    if (e.target === list || (e.target && e.target.contains && e.target.contains(list))) return;
+    place();
+  }, true);
+
+  sel.__ddSync  = sync;
+  sel.__ddClose = close;
+  DD_INSTANCES.push(sel);
+  sync();
+}
+
+var DD_INSTANCES = [];
+function closeAllDd(){
+  DD_INSTANCES.forEach(function(s){ if (s.__ddClose) s.__ddClose(); });
+}
+document.addEventListener("click", function(e){
+  if (e.target && e.target.closest && (e.target.closest(".dd-list") || e.target.closest(".dd-btn"))) return;
+  closeAllDd();
+});
+document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeAllDd(); });
+
+["deposit","deposit_old","transfer"].forEach(function(t){
+  enhanceSelect(document.getElementById("descSelect-" + t));
+});
+
+
+/* =========================================================
+   ວັນທີ — เติมวันที่ของวันนี้ให้อัตโนมัติ (dd/mm/yyyy)
+   teller แก้เองได้ถ้าต้องพิมพ์ใบย้อนหลัง
+   ========================================================= */
+function todayStr(){
+  var d = new Date(), p = function(n){ return (n < 10 ? "0" : "") + n; };
+  return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear();
+}
+function billDateStr(){
+  var el = document.getElementById("billDate");
+  var v = el ? String(el.value || "").trim() : "";
+  return v || todayStr();
+}
+function initBillDate(force){
+  var el = document.getElementById("billDate");
+  if (!el) return;
+  if (force || !el.value) el.value = todayStr();
+}
+
+/* =========================================================
+   คีย์ลัด — ทำใบบิลได้โดยไม่ต้องแตะเมาส์
+     Enter ช่องค้นหา  -> ค้นหา แล้วกระโดดไปช่องเงินช่องแรกให้เลย
+     Enter ช่องเงิน    -> ช่องถัดไป / ช่องสุดท้ายไปที่ปุ่มพิมพ์
+     F2                -> Preview
+     Ctrl+Enter        -> พิมพ์เลย
+     F4                -> กลับไปช่องค้นหา (เริ่มลูกค้าคนใหม่)
+   ========================================================= */
+function focusFirstAmount(){
+  var el = (getDenomMode() === "none")
+    ? document.getElementById("singleAmount")
+    : document.querySelector("#denom-rows input[data-slot]");
+  if (el){ el.focus(); if (el.select) el.select(); }
+}
+function focusActiveSearch(){
+  var panel = document.querySelector(".panel.active");
+  var el = panel ? panel.querySelector(".search-input") : null;
+  if (el){ el.focus(); if (el.select) el.select(); }
+}
+function billViewOpen(){
+  var v = document.getElementById("viewBill");
+  var ov = document.getElementById("authOverlay");
+  if (ov && !ov.classList.contains("hide")) return false;          // ยังไม่ล็อกอิน
+  return !!v && v.style.display !== "none";
+}
+function previewOpen(){
+  var el = document.getElementById("previewOverlay");
+  return !!el && el.classList.contains("open");
+}
+
+document.addEventListener("keydown", function(e){
+  if (!billViewOpen()) return;
+  if (e.key === "Escape" && previewOpen()){   // เดิมปิดได้เฉพาะตอนอยู่โหมดปรับตำแหน่ง
+    e.preventDefault(); closePreview(); return;
+  }
+  if (e.key === "F2"){
+    e.preventDefault();
+    if (!previewOpen()) openPreview(false);
+    return;
+  }
+  if (e.key === "F4"){
+    e.preventDefault();
+    if (!previewOpen()) focusActiveSearch();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter"){
+    e.preventDefault();
+    if (previewOpen()) printFromPreview(); else doPrint(getActivePanelId());
+    return;
+  }
+});
+
+// Enter ในช่องเงิน -> ช่องถัดไป
+document.addEventListener("keydown", function(e){
+  if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+  var t = e.target;
+  if (!t || !t.closest) return;
+  if (!t.closest("#denom-rows") && t.id !== "singleAmount" && t.id !== "expectedAmount") return;
+  e.preventDefault();
+  var all = Array.prototype.slice.call(document.querySelectorAll("#denom-rows input"));
+  var i = all.indexOf(t);
+  if (i >= 0 && i < all.length - 1){ all[i+1].focus(); all[i+1].select && all[i+1].select(); return; }
+  var b = document.querySelector(".panel.active .print-btn");
+  if (b) b.focus();
+});
+
+initBillDate(false);
+initTransferVariant();
+syncTabs();
 
 loadCalib();
 applyPageOffset();
