@@ -3741,4 +3741,48 @@ function previewOpen(){
 document.addEventListener("keydown", function(e){
   if (!billViewOpen()) return;
   if (e.key === "Escape" && previewOpen()){   // เดิมปิดได้เฉพาะตอนอยู่โหมดปรับตำแหน่ง
-    e.preventDefault(); clo
+    e.preventDefault(); closePreview(); return;
+  }
+  if (e.key === "F2"){
+    e.preventDefault();
+    if (!previewOpen()) openPreview(false);
+    return;
+  }
+  if (e.key === "F4"){
+    e.preventDefault();
+    if (!previewOpen()) focusActiveSearch();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter"){
+    e.preventDefault();
+    if (previewOpen()) printFromPreview(); else doPrint(getActivePanelId());
+    return;
+  }
+});
+
+// Enter ในช่องเงิน -> ช่องถัดไป
+document.addEventListener("keydown", function(e){
+  if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+  var t = e.target;
+  if (!t || !t.closest) return;
+  if (!t.closest("#denom-rows") && t.id !== "singleAmount" && t.id !== "expectedAmount") return;
+  e.preventDefault();
+  var all = Array.prototype.slice.call(document.querySelectorAll("#denom-rows input"));
+  var i = all.indexOf(t);
+  if (i >= 0 && i < all.length - 1){ all[i+1].focus(); all[i+1].select && all[i+1].select(); return; }
+  var b = document.querySelector(".panel.active .print-btn");
+  if (b) b.focus();
+});
+
+initBillDate(false);
+initTransferVariant();
+syncTabs();
+
+loadCalib();
+applyPageOffset();
+rebuildDenomRows();
+recompute();
+
+</script>
+</body>
+</html>
