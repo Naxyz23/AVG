@@ -356,6 +356,37 @@ footer b{color:var(--bp-gold);}
   .wrap, .topbar, #viewBill, .calib-bar, .preview-overlay, .userbar, .sidenav{ display:none !important; }
   .print-only{ display:block; }
   .print-page{ box-shadow:none !important; height:10.95in !important; overflow:hidden !important; }
+
+  /* --- STEP 1: บังคับสีดำสนิท ตัดเทา/opacity/filter ที่ทำให้ anti-alias จาง --- */
+  .print-page, .print-page *{
+    color:#000 !important;
+    opacity:1 !important;
+    filter:none !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+  .print-fallback dt{ color:#000 !important; }
+
+  /* --- STEP 2: เพิ่มน้ำหนักเส้น ชดเชยความกว้างด้วย letter-spacing --- */
+  /* ห้ามใช้ -webkit-text-stroke / text-shadow / weight 900 : สระซ้อนลาวจะตัน */
+  .print-page .pf,
+  .print-page .print-fallback{
+    font-weight:600 !important;
+    letter-spacing:-0.2px !important;
+  }
+
+  /* --- STEP 3: ขยายเฉพาะตัวเลขเงิน + ตัวหนังสือลาว (ปรับ 3 ค่านี้จุดเดียว) --- */
+  .print-page{
+    --fs-money: 12pt;   /* ຈຳນວນເງິນ + ຍອດລວມ   (เดิม 11pt) */
+    --fs-denom: 11pt;   /* คอลัมน์ใบแยกเงิน + label (เดิม 10pt) */
+    --fs-words: 12pt;   /* ຈຳນວນເງິນເປັນຕົວໜັງສື (เดิม 11pt) */
+  }
+  .print-page .pf[data-field="amount"],
+  .print-page .pf[data-field="total"]{ font-size:var(--fs-money) !important; }
+
+  .print-page .pf.small{ font-size:var(--fs-denom) !important; }
+
+  .print-page .pf[data-field="words"]{ font-size:var(--fs-words) !important; }
 }
 
 /* =========================================================
@@ -3710,48 +3741,4 @@ function previewOpen(){
 document.addEventListener("keydown", function(e){
   if (!billViewOpen()) return;
   if (e.key === "Escape" && previewOpen()){   // เดิมปิดได้เฉพาะตอนอยู่โหมดปรับตำแหน่ง
-    e.preventDefault(); closePreview(); return;
-  }
-  if (e.key === "F2"){
-    e.preventDefault();
-    if (!previewOpen()) openPreview(false);
-    return;
-  }
-  if (e.key === "F4"){
-    e.preventDefault();
-    if (!previewOpen()) focusActiveSearch();
-    return;
-  }
-  if ((e.ctrlKey || e.metaKey) && e.key === "Enter"){
-    e.preventDefault();
-    if (previewOpen()) printFromPreview(); else doPrint(getActivePanelId());
-    return;
-  }
-});
-
-// Enter ในช่องเงิน -> ช่องถัดไป
-document.addEventListener("keydown", function(e){
-  if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
-  var t = e.target;
-  if (!t || !t.closest) return;
-  if (!t.closest("#denom-rows") && t.id !== "singleAmount" && t.id !== "expectedAmount") return;
-  e.preventDefault();
-  var all = Array.prototype.slice.call(document.querySelectorAll("#denom-rows input"));
-  var i = all.indexOf(t);
-  if (i >= 0 && i < all.length - 1){ all[i+1].focus(); all[i+1].select && all[i+1].select(); return; }
-  var b = document.querySelector(".panel.active .print-btn");
-  if (b) b.focus();
-});
-
-initBillDate(false);
-initTransferVariant();
-syncTabs();
-
-loadCalib();
-applyPageOffset();
-rebuildDenomRows();
-recompute();
-
-</script>
-</body>
-</html>
+    e.preventDefault(); clo
