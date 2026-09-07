@@ -367,26 +367,13 @@ footer b{color:var(--bp-gold);}
   }
   .print-fallback dt{ color:#000 !important; }
 
-  /* --- STEP 2: เพิ่มน้ำหนักเส้น ชดเชยความกว้างด้วย letter-spacing --- */
-  /* ห้ามใช้ -webkit-text-stroke / text-shadow / weight 900 : สระซ้อนลาวจะตัน */
-  .print-page .pf,
-  .print-page .print-fallback{
-    font-weight:600 !important;
-    letter-spacing:-0.2px !important;
-  }
+  /* --- STEP 2 + STEP 4 ย้ายออกไปนอก @media print แล้ว (ดู "น้ำหนักเส้น" ข้างล่าง)
+         เพราะ font-weight/letter-spacing เป็นตัวกำหนดความกว้างของข้อความ ถ้ามีผลเฉพาะ
+         ตอนพิมพ์ พรีวิวจะบางกว่าของจริง แล้วปรับขนาดจนดูพอดีบนจอ แต่พิมพ์ออกมาเบียดกรอบ --- */
 
-  /* --- STEP 3: ขยายเฉพาะตัวเลขเงิน + ตัวหนังสือลาว (ปรับ 3 ค่านี้จุดเดียว) --- */
-  .print-page{
-    --fs-money: 12pt;   /* ຈຳນວນເງິນ + ຍອດລວມ   (เดิม 11pt) */
-    --fs-denom: 11pt;   /* คอลัมน์ใบแยกเงิน + label (เดิม 10pt) */
-    --fs-words: 12pt;   /* ຈຳນວນເງິນເປັນຕົວໜັງສື (เดิม 11pt) */
-  }
-  .print-page .pf[data-field="amount"],
-  .print-page .pf[data-field="total"]{ font-size:var(--fs-money) !important; }
+  /* --- STEP 3: ขนาดฟอนต์ย้ายไปประกาศที่ :root แล้ว (ดู "ขนาดฟอนต์ช่องพิมพ์" ข้างล่าง)
+         เพื่อให้พรีวิวบนจอเห็นขนาดเดียวกับที่พิมพ์จริง และปรับผ่านปุ่มในแถบคาลิเบรตได้ --- */
 
-  .print-page .pf.small{ font-size:var(--fs-denom) !important; }
-
-  .print-page .pf[data-field="words"]{ font-size:var(--fs-words) !important; }
 }
 
 /* =========================================================
@@ -398,6 +385,66 @@ footer b{color:var(--bp-gold);}
   position:relative; width:8.5in; height:11in; background:#fff;
   font-family:'Phetsarath OT','Noto Sans Lao','IBM Plex Sans',sans-serif;
   color:#000; margin:0 auto;
+  /* ฟอนต์เฉพาะช่องตัวเลขล้วน — Tahoma เส้นหนากว่า Phetsarath มาก อ่านชัดบนเครื่องเข็ม 24-pin
+     (Tahoma เป็นฟอนต์ระบบ Windows ไม่ต้องโหลดผ่านเน็ต) */
+  --font-num: Tahoma,'IBM Plex Sans',Arial,sans-serif;
+}
+
+/* ===== ช่องตัวเลขล้วน (ไม่มีสระลาวซ้อน) — ใช้ฟอนต์ละตินเส้นหนา ทั้งบนจอและตอนพิมพ์ ===== */
+.print-page .pf.small,
+.print-page .pf[data-field="contract"],
+.print-page .pf[data-field="tel"],
+.print-page .pf[data-field="amount"],
+.print-page .pf[data-field="total"],
+.print-page .pf[data-field="date"]{
+  font-family:var(--font-num);
+}
+
+/* =========================================================
+   ขนาดฟอนต์ช่องพิมพ์ — ค่าเริ่มต้น 4 ค่า
+   ประกาศที่ :root เพราะ JS (applyFontSizes) เขียนทับที่ documentElement
+   เหมือน --print-offset-x/y และพรีวิวบนจอจะได้เห็นขนาดเท่าตอนพิมพ์จริง
+   ปรับได้จากปุ่มในแถบคาลิเบรต (เฉพาะ admin) — เก็บแยกตามชนิดใบ
+   ========================================================= */
+:root{
+  --fs-money:   12pt;  /* ຈຳນວນເງິນ (ช่องกลางใบ) */
+  --fs-denom:   10pt;  /* คอลัมน์ใบแยกเงิน + label + ยอดรวมท้ายคอลัมน์ */
+  --fs-words:   12pt;  /* ຈຳນວນເງິນເປັນຕົວໜັງສື */
+  --fs-account: 11pt;  /* เลขบัญชี/สัญญา (contract) + เลขบนสุด (tel) */
+}
+.print-page .pf[data-field="amount"]{ font-size:var(--fs-money) !important; }
+
+/* total = ช่องล่างสุดของคอลัมน์แยกเงิน (x เท่ากับ DENOM_BASE_OLD พอดี)
+   จึงต้องขนาดเท่าคอลัมน์นั้น ไม่ใช่เท่าจำนวนเงินหลักกลางใบ */
+.print-page .pf.small,
+.print-page .pf[data-field="total"]{ font-size:var(--fs-denom) !important; }
+
+.print-page .pf[data-field="words"]{ font-size:var(--fs-words) !important; }
+
+.print-page .pf[data-field="contract"],
+.print-page .pf[data-field="tel"]{ font-size:var(--fs-account) !important; }
+
+/* =========================================================
+   น้ำหนักเส้น — ชดเชยความจางของเครื่องพิมพ์เข็ม
+   มีผลทั้งบนจอและตอนพิมพ์ เพราะ weight/letter-spacing เปลี่ยนความกว้างข้อความ
+   พรีวิวจึงต้องแสดงเท่าของจริง ไม่งั้นเช็คเรื่องตัวเลขล้นกรอบไม่ได้
+   ========================================================= */
+/* ข้อความลาว: ห้ามใช้ -webkit-text-stroke / text-shadow / weight 900 — สระซ้อนจะตัน */
+.print-page .pf,
+.print-page .print-fallback{
+  font-weight:600;
+  letter-spacing:-0.2px;
+}
+/* ช่องตัวเลขล้วน: ไม่มีสระซ้อนให้ตัน ดันน้ำหนักได้เต็มที่
+   และปลด letter-spacing ติดลบ ที่ทำให้เลขติดกันจนหัวเข็มพิมพ์ทับ */
+.print-page .pf.small,
+.print-page .pf[data-field="contract"],
+.print-page .pf[data-field="tel"],
+.print-page .pf[data-field="amount"],
+.print-page .pf[data-field="total"],
+.print-page .pf[data-field="date"]{
+  font-weight:700;
+  letter-spacing:0;
 }
 .print-page .origin{
   position:absolute;
@@ -487,6 +534,18 @@ footer b{color:var(--bp-gold);}
 .calib-btn.gold{ background:linear-gradient(180deg,#f4b400,#e0a300); color:#1d1300; border-color:#e0a300; }
 .calib-btn.danger{ background:#7a2620; border-color:#a3392f; }
 .calib-step{ display:flex; align-items:center; gap:6px; }
+/* ===== ปุ่มปรับขนาดฟอนต์ (admin only) ===== */
+.calib-font{ flex-wrap:wrap; gap:6px 12px; }
+.calib-font .fs-item{ display:flex; align-items:center; gap:3px; }
+.calib-font .fs-item .nm{ color:#7fa8c9; font-size:11px; margin-right:2px; }
+.calib-font .fs-item b{ min-width:32px; text-align:center; color:var(--gold,#f4b400); font-size:12px; }
+.calib-font button{
+  border:1px solid #1c4a6b; background:#10324d; color:#eaf3fb; border-radius:6px;
+  width:24px; height:24px; cursor:pointer; font-size:13px; line-height:1; padding:0;
+  display:flex; align-items:center; justify-content:center; font-family:inherit;
+}
+.calib-font button:hover{ background:#16486e; }
+.calib-font button.fs-reset{ width:auto; padding:0 10px; font-size:11px; }
 .calib-step select{ background:#10324d; color:#eaf3fb; border:1px solid #1c4a6b; border-radius:6px; padding:5px 8px; font-family:inherit; font-size:12px; }
 
 /* ปุ่ม Preview/Edit ในแถบเครื่องมือ Bill Printing (บนจอ) */
@@ -1103,6 +1162,17 @@ footer b{color:var(--bp-gold);}
       <option value="8.5">3 mm</option>
       <option value="28.35">10 mm</option>
     </select>
+  </div>
+  <!-- ปรับขนาดฟอนต์ช่องพิมพ์ — เฉพาะ admin (syncFontUI คุมการซ่อน/แสดง)
+       ปรับได้ทีละ 0.5pt ในช่วง 9-13pt เท่านั้น กันตั้งผิดจนตัวเลขทะลุกรอบกระดาษฟอร์ม
+       ค่าที่ปรับผูกกับใบที่เลือกใน "ກຳລັງປັບ:" (CALIB_TYPE) แยกกันแต่ละแบบฟอร์ม -->
+  <div class="calib-group calib-font" id="calibFontGroup" style="display:none">
+    <span class="lbl">ຂະໜາດ:</span>
+    <span class="fs-item"><span class="nm">ເງິນ</span><button onclick="nudgeFont('money',-1)" title="ลดขนาด จำนวนเงินกลางใบ">&minus;</button><b id="fsVal-money">12</b><button onclick="nudgeFont('money',1)" title="เพิ่มขนาด จำนวนเงินกลางใบ">+</button></span>
+    <span class="fs-item"><span class="nm">ແຍກເງິນ</span><button onclick="nudgeFont('denom',-1)" title="ลดขนาด คอลัมน์แยกเงินฝั่งขวา + ยอดรวมท้ายคอลัมน์">&minus;</button><b id="fsVal-denom">10</b><button onclick="nudgeFont('denom',1)" title="เพิ่มขนาด คอลัมน์แยกเงินฝั่งขวา + ยอดรวมท้ายคอลัมน์">+</button></span>
+    <span class="fs-item"><span class="nm">ຕົວໜັງສື</span><button onclick="nudgeFont('words',-1)" title="ลดขนาด จำนวนเงินเป็นตัวหนังสือ">&minus;</button><b id="fsVal-words">12</b><button onclick="nudgeFont('words',1)" title="เพิ่มขนาด จำนวนเงินเป็นตัวหนังสือ">+</button></span>
+    <span class="fs-item"><span class="nm">ເລກບັນຊີ</span><button onclick="nudgeFont('account',-1)" title="ลดขนาด เลขบัญชี/สัญญา">&minus;</button><b id="fsVal-account">11</b><button onclick="nudgeFont('account',1)" title="เพิ่มขนาด เลขบัญชี/สัญญา">+</button></span>
+    <button class="fs-reset" onclick="resetFonts()" title="คืนค่าขนาดเริ่มต้นของใบนี้">↺ ຄືນຄ່າ</button>
   </div>
   <div class="calib-group">
     <button class="calib-btn" onclick="toggleGuides()" id="guideBtn">Grid</button>
@@ -2840,13 +2910,44 @@ var CALIB_TABLE = 'print_calib';
 var CALIB_ROW_ID = 1;
 var calibPushTimer = null;
 
+/* ---------- ขนาดฟอนต์ช่องพิมพ์ — เก็บแยกตามชนิดใบเหมือน PAGE_OFFSET
+     เพราะกล่องของแต่ละแบบฟอร์มกว้างไม่เท่ากัน (เช่น ໃບຖອນ มีคอลัมน์ป้ายกำกับ
+     เบียดคอลัมน์ตัวเลขอยู่ ต้องใช้ขนาดเล็กกว่า ໃບມອບ) ---------- */
+var FONT_KEYS     = ['money','denom','words','account'];
+var FONT_DEFAULTS = { money:12, denom:10, words:12, account:11 };
+var FONT_MIN = 9, FONT_MAX = 13, FONT_STEP = 0.5;
+var FONT_SIZES = {};
+
+function defaultFonts(){
+  var o = {}; FONT_KEYS.forEach(function(k){ o[k] = FONT_DEFAULTS[k]; }); return o;
+}
+/* กันค่าเพี้ยนจาก cloud/JSON ที่วางมา — บังคับให้อยู่ในช่วงและลงตัวทีละ 0.5pt เสมอ */
+function clampFont(v, k){
+  var n = parseFloat(v);
+  if (!isFinite(n)) n = FONT_DEFAULTS[k];
+  return Math.min(FONT_MAX, Math.max(FONT_MIN, Math.round(n*2)/2));
+}
+function curFonts(){
+  if (!FONT_SIZES[CALIB_TYPE]) FONT_SIZES[CALIB_TYPE] = defaultFonts();
+  return FONT_SIZES[CALIB_TYPE];
+}
+/* ก้อนข้อมูล calib ที่ใช้ร่วมกันทุกที่ (localStorage / cloud / export) */
+function calibPayload(){
+  return { pages:PAGE_OFFSET, fields:FIELD_OFFSETS, fonts:FONT_SIZES };
+}
+
 function applyCalibData(o){
-  PAGE_OFFSET = {}; FIELD_OFFSETS = {};
-  PRINT_TYPES.forEach(function(t){ PAGE_OFFSET[t]={x:0,y:0}; FIELD_OFFSETS[t]={}; });
+  PAGE_OFFSET = {}; FIELD_OFFSETS = {}; FONT_SIZES = {};
+  PRINT_TYPES.forEach(function(t){ PAGE_OFFSET[t]={x:0,y:0}; FIELD_OFFSETS[t]={}; FONT_SIZES[t]=defaultFonts(); });
   if (o){
     PRINT_TYPES.forEach(function(t){
       if(o.pages && o.pages[t]) PAGE_OFFSET[t] = o.pages[t];
       if(o.fields && o.fields[t]) FIELD_OFFSETS[t] = o.fields[t];
+      if(o.fonts && o.fonts[t]){
+        FONT_KEYS.forEach(function(k){
+          if (o.fonts[t][k] != null) FONT_SIZES[t][k] = clampFont(o.fonts[t][k], k);
+        });
+      }
     });
   }
 }
@@ -2874,7 +2975,7 @@ function fetchCloudCalib(force){
     .then(function(res){
       if (!res || res.error || !res.data) return; // ยังไม่มีตาราง/แถว หรือออฟไลน์ — ใช้ค่า local ที่โหลดไว้แล้วต่อไปเงียบๆ
       applyCalibData(res.data.data);
-      try{ localStorage.setItem(STORE_KEY, JSON.stringify({pages:PAGE_OFFSET, fields:FIELD_OFFSETS})); }catch(e){}
+      try{ localStorage.setItem(STORE_KEY, JSON.stringify(calibPayload())); }catch(e){}
       applyPageOffset();
       if (typeof refreshPreview === 'function') refreshPreview();
     })
@@ -2899,22 +3000,24 @@ function importCalib(){
   var data;
   try{ data = JSON.parse(raw); }
   catch(e){ st.innerHTML = '<span style="color:var(--bp-danger)">❌ JSON error: ' + esc(e.message) + '</span>'; return; }
-  if (!data || typeof data !== 'object' || (!data.pages && !data.fields)){
-    st.innerHTML = '<span style="color:var(--bp-danger)">❌ ไม่พบ pages / fields ในข้อมูลที่วาง</span>';
+  if (!data || typeof data !== 'object' || (!data.pages && !data.fields && !data.fonts)){
+    st.innerHTML = '<span style="color:var(--bp-danger)">❌ ไม่พบ pages / fields / fonts ในข้อมูลที่วาง</span>';
     return;
   }
 
-  var n = 0;
+  var n = 0, nf = 0;
   PRINT_TYPES.forEach(function(t){
     if (data.fields && data.fields[t]) n += Object.keys(data.fields[t]).length;
+    if (data.fonts && data.fonts[t]) nf++;
   });
-  if (!confirm('จะทับค่าตำแหน่งพิมพ์ปัจจุบันทั้งหมดด้วยค่าที่วางมา (' + n + ' ช่อง) และส่งขึ้น cloud ให้ทุกเครื่อง — ยืนยัน?')) return;
+  var what = n + ' ช่อง' + (nf ? ' + ขนาดตัวอักษร ' + nf + ' ໃບ' : '');
+  if (!confirm('จะทับค่าตำแหน่งพิมพ์ปัจจุบันทั้งหมดด้วยค่าที่วางมา (' + what + ') และส่งขึ้น cloud ให้ทุกเครื่อง — ยืนยัน?')) return;
 
   applyCalibData(data);
   saveCalib();              // เซฟลงเครื่อง + push ขึ้น cloud (เช็ค isAdmin ซ้ำอยู่แล้ว)
   applyPageOffset();
   if (typeof refreshPreview === 'function') refreshPreview();
-  st.innerHTML = '<span style="color:var(--bp-ok)">✅ ອັບເດດສຳເລັດ — ' + n + ' fields</span>';
+  st.innerHTML = '<span style="color:var(--bp-ok)">✅ ອັບເດດສຳເລັດ — ' + n + ' fields' + (nf ? ' + fonts ' + nf : '') + '</span>';
 }
 
 function useCloudCalib(){
@@ -2926,7 +3029,7 @@ function showCalibExport(){
   var box = document.getElementById('calibExportBox');
   var statusEl = document.getElementById('calibExportStatus');
   if (!box) return;
-  var json = JSON.stringify({ pages: PAGE_OFFSET, fields: FIELD_OFFSETS }, null, 2);
+  var json = JSON.stringify(calibPayload(), null, 2);
   box.value = json;
   box.style.display = '';
   statusEl.style.display = '';
@@ -2950,7 +3053,7 @@ function showCalibExport(){
 }
 
 function saveCalib(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify({pages:PAGE_OFFSET, fields:FIELD_OFFSETS})); }
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(calibPayload())); }
   catch(e){ /* เงียบไว้ ถ้าเซฟไม่ได้ก็ยังใช้งานต่อได้แค่ไม่จำ */ }
   pushCalibToCloudDebounced();
 }
@@ -2961,7 +3064,7 @@ function pushCalibToCloudDebounced(){
   calibPushTimer = setTimeout(function(){
     sbAuth.from(CALIB_TABLE).upsert({
       id: CALIB_ROW_ID,
-      data: {pages:PAGE_OFFSET, fields:FIELD_OFFSETS},
+      data: calibPayload(),
       updated_by: (currentSession && currentSession.user && currentSession.user.email) || null,
       updated_at: new Date().toISOString()
     }).then(function(res){
@@ -2977,6 +3080,52 @@ function applyPageOffset(){
   var po = PAGE_OFFSET[t] || {x:0,y:0};
   document.documentElement.style.setProperty('--print-offset-x', po.x + 'pt');
   document.documentElement.style.setProperty('--print-offset-y', po.y + 'pt');
+  applyFontSizes();
+}
+
+/* เขียนขนาดฟอนต์ของใบที่กำลังปรับอยู่ลง :root — พรีวิวกับตอนพิมพ์จึงเห็นเท่ากัน */
+function applyFontSizes(){
+  var f = curFonts(), root = document.documentElement;
+  FONT_KEYS.forEach(function(k){ root.style.setProperty('--fs-'+k, f[k] + 'pt'); });
+  syncFontUI();
+}
+
+/* อัปเดตตัวเลขบนแถบคาลิเบรต + ซ่อนทั้งกลุ่มถ้าไม่ใช่ admin
+   (ผู้ใช้ทั่วไปปรับตำแหน่งชั่วคราวได้ แต่ขนาดฟอนต์ให้ admin คุมจุดเดียว
+    เพราะตั้งผิดแล้วตัวเลขจะทะลุออกนอกกรอบที่พิมพ์ไว้บนกระดาษฟอร์ม) */
+function syncFontUI(){
+  var g = document.getElementById('calibFontGroup');
+  if (!g) return;
+  // กันไว้: syncFontUI ถูกเรียกจาก applyPageOffset ซึ่งอยู่ในเส้นทาง build/print
+  // ถ้า isAdmin() พังด้วยเหตุใดก็ตาม ต้องไม่ลามไปทำให้พิมพ์ใบไม่ได้
+  var admin = false;
+  try{ admin = (typeof isAdmin === 'function') && isAdmin(); }catch(e){ admin = false; }
+  g.style.display = admin ? '' : 'none';
+  var f = curFonts();
+  FONT_KEYS.forEach(function(k){
+    var el = document.getElementById('fsVal-' + k);
+    if (el) el.textContent = f[k];
+  });
+}
+
+function nudgeFont(key, dir){
+  if (!isAdmin()) return;
+  var f = curFonts();
+  var next = clampFont(f[key] + dir * FONT_STEP, key);
+  if (next === f[key]) return;   // ชนเพดาน/พื้นแล้ว ไม่ต้องเซฟซ้ำ
+  f[key] = next;
+  saveCalib();
+  applyFontSizes();
+  if (typeof refreshPreview === 'function') refreshPreview();
+}
+
+function resetFonts(){
+  if (!isAdmin()) return;
+  if (!confirm('ຄືນຄ່າຂະໜາດຕົວອັກສອນຂອງໃບນີ້ເປັນຄ່າເລີ່ມຕົ້ນ?')) return;
+  FONT_SIZES[CALIB_TYPE] = defaultFonts();
+  saveCalib();
+  applyFontSizes();
+  if (typeof refreshPreview === 'function') refreshPreview();
 }
 
 function buildDepositGrid(){
@@ -3332,9 +3481,10 @@ function nudgeReset(){
 
 function resetCalib(){
   if(!confirm('Reset all print positions back to default (from the Excel file)?')) return;
-  PAGE_OFFSET = {}; FIELD_OFFSETS = {};
-  PRINT_TYPES.forEach(function(t){ PAGE_OFFSET[t]={x:0,y:0}; FIELD_OFFSETS[t]={}; });
+  PAGE_OFFSET = {}; FIELD_OFFSETS = {}; FONT_SIZES = {};
+  PRINT_TYPES.forEach(function(t){ PAGE_OFFSET[t]={x:0,y:0}; FIELD_OFFSETS[t]={}; FONT_SIZES[t]=defaultFonts(); });
   saveCalib();
+  applyFontSizes();
   selectTarget('page');
   refreshPreview();
 }
