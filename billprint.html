@@ -383,11 +383,11 @@ footer b{color:var(--bp-gold);}
    ========================================================= */
 .print-page{
   position:relative; width:8.5in; height:11in; background:#fff;
-  font-family:'Phetsarath OT','Noto Sans Lao','IBM Plex Sans',sans-serif;
+  font-family:var(--print-font-lao, 'Phetsarath OT','Noto Sans Lao','IBM Plex Sans',sans-serif);
   color:#000; margin:0 auto;
   /* ฟอนต์เฉพาะช่องตัวเลขล้วน — Tahoma เส้นหนากว่า Phetsarath มาก อ่านชัดบนเครื่องเข็ม 24-pin
      (Tahoma เป็นฟอนต์ระบบ Windows ไม่ต้องโหลดผ่านเน็ต) */
-  --font-num: Tahoma,'IBM Plex Sans',Arial,sans-serif;
+  --font-num: var(--print-font-numeric, Tahoma,'IBM Plex Sans',Arial,sans-serif);
 }
 
 /* ===== ช่องตัวเลขล้วน (ไม่มีสระลาวซ้อน) — ใช้ฟอนต์ละตินเส้นหนา ทั้งบนจอและตอนพิมพ์ ===== */
@@ -422,7 +422,14 @@ footer b{color:var(--bp-gold);}
 .print-page .pf[data-field="words"]{ font-size:var(--fs-words) !important; }
 
 .print-page .pf[data-field="contract"],
-.print-page .pf[data-field="tel"]{ font-size:var(--fs-account) !important; }
+.print-page .pf[data-field="tel"],
+.print-page .pf[data-field="from_tel"],
+.print-page .pf[data-field="from_contract"],
+.print-page .pf[data-field="to_contract"],
+.print-page .pf[data-field="nps_accnum"],
+.print-page .pf[data-field="cheque_no"]{ font-size:var(--fs-account) !important; }
+
+.print-page .pf, .print-page .print-fallback{ font-size:var(--fs-general, 11pt); }
 
 /* =========================================================
    น้ำหนักเส้น — ชดเชยความจางของเครื่องพิมพ์เข็ม
@@ -432,7 +439,7 @@ footer b{color:var(--bp-gold);}
 /* ข้อความลาว: ห้ามใช้ -webkit-text-stroke / text-shadow / weight 900 — สระซ้อนจะตัน */
 .print-page .pf,
 .print-page .print-fallback{
-  font-weight:600;
+  font-weight:var(--print-text-weight, 600);
   letter-spacing:-0.2px;
 }
 /* ช่องตัวเลขล้วน: ไม่มีสระซ้อนให้ตัน ดันน้ำหนักได้เต็มที่
@@ -484,6 +491,18 @@ footer b{color:var(--bp-gold);}
   background:#0a1f31; border-bottom:1px solid #1c4a6b;
   display:flex; align-items:center; gap:10px;
 }
+.preview-head{ flex-wrap:wrap; }
+.preview-fonts{ display:flex; flex-wrap:wrap; gap:8px; color:#eaf3fb; font-size:12px; }
+.preview-fonts label{ display:flex; align-items:center; gap:4px; }
+.preview-sizes{ flex-basis:100%; color:#eaf3fb; font-size:13px; }
+.preview-sizes p{ margin:0; }
+.preview-sizes [hidden]{ display:none; }
+.preview-stage .pf[data-field], .preview-stage .pf[data-size-field]{ cursor:pointer; }
+.preview-stage .pf.size-selected{ outline:2px solid #147bb0; outline-offset:-2px; }
+.preview-size-stepper{ display:flex; align-items:center; gap:4px; }
+.preview-size-stepper .calib-btn{ min-width:30px; padding:4px; }
+.preview-size-stepper .calib-btn:disabled{ opacity:.45; cursor:default; }
+.preview-size-stepper output{ min-width:46px; text-align:center; font-variant-numeric:tabular-nums; }
 .preview-title{ color:#eaf3fb; font-weight:700; font-size:14px; }
 .preview-title i{ color:var(--gold,#f4b400); margin-right:6px; }
 .preview-spacer{ flex:1; }
@@ -501,6 +520,7 @@ footer b{color:var(--bp-gold);}
 }
 .preview-stage .pf{ outline:1px dashed rgba(2,116,191,.35); cursor:default; }
 .preview-stage .pf[data-field^="denom"]{ border-bottom:1px solid rgba(10,40,60,.45); }
+.preview-stage #depositOrigin .pf[data-denomidx]{ border-bottom:0; }
 .preview-stage.calib .pf{ cursor:pointer; }
 .preview-stage.calib .pf:hover{ outline:1.5px solid var(--bp-navy, #0274bf); background:rgba(2,116,191,.06); }
 .preview-stage.calib .pf.sel{ outline:2px solid var(--gold, #f4b400); background:rgba(244,180,0,.14); }
@@ -549,7 +569,7 @@ footer b{color:var(--bp-gold);}
 .calib-step select{ background:#10324d; color:#eaf3fb; border:1px solid #1c4a6b; border-radius:6px; padding:5px 8px; font-family:inherit; font-size:12px; }
 
 /* ปุ่ม Preview/Edit ในแถบเครื่องมือ Bill Printing (บนจอ) */
-.bill-toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:0 24px 18px; }
+.bill-toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-inline-start:auto; max-width:100%; }
 .bill-toolbar .tbtn{
   display:inline-flex; align-items:center; gap:7px;
   border:1px solid var(--bp-border); background:rgba(255,255,255,.05); color:var(--bp-text);
@@ -1128,8 +1148,39 @@ footer b{color:var(--bp-gold);}
   <div class="preview-head">
     <span class="preview-title" id="previewTitle"><i class="fa-solid fa-eye"></i> ຕົວຢ່າງກ່ອນພິມ</span>
     <span class="preview-spacer"></span>
+    <div class="preview-fonts">
+      <label>ຟອນລາວ
+        <select id="printLaoFont" onchange="savePrintTypography()">
+          <option value="phetsarath">Phetsarath OT</option>
+          <option value="noto">Noto Sans Lao</option>
+        </select>
+      </label>
+      <label>ຟອນຕົວເລກ
+        <select id="printNumberFont" onchange="savePrintTypography()">
+          <option value="tahoma">Tahoma</option>
+          <option value="calibri">Calibri</option>
+          <option value="arial">Arial</option>
+        </select>
+      </label>
+      <label>ນ້ຳໜັກ
+        <select id="printTextWeight" onchange="savePrintTypography()">
+          <option value="600">ເດີມ</option>
+          <option value="700">ເຂັ້ມ</option>
+        </select>
+      </label>
+    </div>
     <button class="calib-btn primary" onclick="printFromPreview()"><i class="fa-solid fa-print"></i> ພິມ</button>
     <button class="calib-btn" onclick="closePreview()">✕ ປິດ</button>
+    <div class="preview-sizes">
+      <p id="previewSizeHint">ກົດຊ່ອງໃນຕົວຢ່າງເພື່ອປັບຂະໜາດຕົວອັກສອນ</p>
+      <div class="preview-size-stepper" id="previewFieldSize" role="group" aria-labelledby="previewFieldLabel" hidden>
+        <span id="previewFieldLabel"></span>
+        <button type="button" class="calib-btn" id="fieldSizeMinus" onclick="changeFieldSize(-1)" aria-label="ຫຼຸດຂະໜາດ">&minus;</button>
+        <output id="fieldSizeValue"></output>
+        <button type="button" class="calib-btn" id="fieldSizePlus" onclick="changeFieldSize(1)" aria-label="ເພີ່ມຂະໜາດ">+</button>
+        <button type="button" class="calib-btn" id="fieldSizeReset" onclick="changeFieldSize(0)">↺ ຄືນຄ່າຊ່ອງນີ້</button>
+      </div>
+    </div>
   </div>
   <div class="preview-stage" id="previewStage"></div>
 </div>
@@ -1167,7 +1218,7 @@ footer b{color:var(--bp-gold);}
        ปรับได้ทีละ 0.5pt ในช่วง 9-13pt เท่านั้น กันตั้งผิดจนตัวเลขทะลุกรอบกระดาษฟอร์ม
        ค่าที่ปรับผูกกับใบที่เลือกใน "ກຳລັງປັບ:" (CALIB_TYPE) แยกกันแต่ละแบบฟอร์ม -->
   <div class="calib-group calib-font" id="calibFontGroup" style="display:none">
-    <span class="lbl">ຂະໜາດ:</span>
+    <span class="lbl">ຂະໜາດເລີ່ມຕົ້ນ (Admin):</span>
     <span class="fs-item"><span class="nm">ເງິນ</span><button onclick="nudgeFont('money',-1)" title="ลดขนาด จำนวนเงินกลางใบ">&minus;</button><b id="fsVal-money">12</b><button onclick="nudgeFont('money',1)" title="เพิ่มขนาด จำนวนเงินกลางใบ">+</button></span>
     <span class="fs-item"><span class="nm">ແຍກເງິນ</span><button onclick="nudgeFont('denom',-1)" title="ลดขนาด คอลัมน์แยกเงินฝั่งขวา + ยอดรวมท้ายคอลัมน์">&minus;</button><b id="fsVal-denom">10</b><button onclick="nudgeFont('denom',1)" title="เพิ่มขนาด คอลัมน์แยกเงินฝั่งขวา + ยอดรวมท้ายคอลัมน์">+</button></span>
     <span class="fs-item"><span class="nm">ຕົວໜັງສື</span><button onclick="nudgeFont('words',-1)" title="ลดขนาด จำนวนเงินเป็นตัวหนังสือ">&minus;</button><b id="fsVal-words">12</b><button onclick="nudgeFont('words',1)" title="เพิ่มขนาด จำนวนเงินเป็นตัวหนังสือ">+</button></span>
@@ -2187,6 +2238,8 @@ if (sbAuth){
 }
 
 function showAuthOverlay(){
+  billUserId = null;
+  clearSearchAddresses();
   document.getElementById("authOverlay").classList.remove("hide");
   document.getElementById("userbar").style.display = "none";
   var navAdminBtn = document.getElementById("navAdmin");
@@ -2195,6 +2248,7 @@ function showAuthOverlay(){
 }
 function hideAuthOverlay(session){
   currentSession = session;
+  billUserId = session.user.id;
   document.getElementById("authOverlay").classList.add("hide");
   var ub = document.getElementById("userbar");
   ub.style.display = "";
@@ -2205,7 +2259,27 @@ function hideAuthOverlay(session){
   // (รอให้ล็อกอินก่อนเพราะตาราง print_calib ต้อง authenticated ถึงจะอ่านได้)
   if (typeof fetchCloudCalib === "function") fetchCloudCalib();
   // กู้ข้อมูลที่ค้างไว้ในฟอร์ม (ถ้ามี) — กันข้อมูลหายตอน reload / โดนดีดออก
-  if (typeof restoreDraft === "function") restoreDraft();
+  resetBillInputs();
+  restoreDraft();
+}
+
+var billUserId = null;
+function tellerAddress(){
+  var user = currentSession && currentSession.user;
+  if (!user || user.id !== billUserId) return "";
+  var settings = user.app_metadata || {};
+  if (settings.address_source !== "branch") return "";
+  var address = settings.teller_address;
+  return typeof address === "string" ? address.trim() : "";
+}
+
+function clearSearchAddresses(){
+  document.querySelectorAll('#viewBill .account-block').forEach(function(block){
+    block.activeCustomerSearch = null;
+  });
+  document.querySelectorAll('#viewBill input[data-field="Addr"]').forEach(function(input){
+    input.value = "";
+  });
 }
 
 function handleLogin(ev){
@@ -2234,6 +2308,8 @@ function handleLogin(ev){
 }
 
 function handleLogout(){
+  clearTimeout(draftTimer);
+  saveDraftNow();
   localStorage.removeItem(LOGIN_AT_KEY);
   if (sbAuth) sbAuth.auth.signOut();
   currentSession = null;
@@ -2398,13 +2474,24 @@ function fieldLabel(el){
 }
 
 function applyHit(block, hit, statusEl, tag){
+  if (sbAuth && (!currentSession || currentSession.user.id !== billUserId)){
+    showAuthOverlay();
+    return;
+  }
   // สำคัญ: ล้างทุกช่องที่มาจากฐานข้อมูลก่อนเติมค่าใหม่เสมอ
   // ของเดิมข้ามช่องที่ค่าว่าง ทำให้ เบີໂທ/ທີ່ຢູ່/ສະກຸນເງິນ ของลูกค้าคนก่อน
   // ค้างอยู่แล้วถูกพิมพ์ลงใบบิลของลูกค้าคนใหม่
   var missingLabels = [];
+  if (String(hit.CONTRACT) !== fieldVal(block, 'CONTRACT')) initBillDate(false);
+  var withdrawer = block.querySelector('#withdrawerName');
+  if (withdrawer){
+    var matchedAccount = String(hit.CONTRACT);
+    if (withdrawer.dataset.matchedAccount !== matchedAccount) withdrawer.value = '';
+    withdrawer.dataset.matchedAccount = matchedAccount;
+  }
   block.querySelectorAll("[data-field]").forEach(function(el){
     var key = el.getAttribute("data-field");
-    var v = hit[key];
+    var v = key === "Addr" ? (tellerAddress() || hit.Addr) : hit[key];
     if (v){
       el.value = v;
     } else if (el.tagName === "SELECT"){
@@ -2454,17 +2541,54 @@ function jsonpRequest(url, onData, onError, timeoutMs){
   document.body.appendChild(script);
 }
 
+function clearUnmatchedCustomer(block){
+  var withdrawer = block.querySelector('#withdrawerName');
+  if (withdrawer){
+    withdrawer.value = '';
+    delete withdrawer.dataset.matchedAccount;
+  }
+  block.querySelectorAll('[data-field]').forEach(function(field){
+    if (field.tagName === 'SELECT') field.selectedIndex = 0;
+    else field.value = '';
+  });
+  var currency = block.querySelector('[data-field="CURRENCY"]');
+  if (currency) onCurrencyChange(currency);
+  recompute();
+  saveDraftSoon();
+}
+
+function prepareAccountSearch(block){
+  block.activeCustomerSearch = null;
+  var query = block.querySelector('.search-input').value.trim();
+  var status = block.querySelector('.search-status');
+  var missing = 16 - query.length;
+  var valid = /^[0-9]{16}$/.test(query);
+  status.textContent = valid ? '' : /^[0-9]*$/.test(query) && missing > 0
+    ? 'ຍັງຂາດ ' + missing + ' ຕົວເລກ'
+    : 'ກະລຸນາໃສ່ເລກບັນຊີ 16 ຫຼັກ';
+  status.className = valid ? 'search-status' : 'search-status err';
+  return valid;
+}
+
+document.querySelectorAll('.account-block .search-input').forEach(function(input){
+  input.inputMode = 'numeric';
+  input.placeholder = 'ເລກບັນຊີ 16 ຫຼັກ';
+  input.addEventListener('input', function(){
+    prepareAccountSearch(input.closest('.account-block'));
+  });
+});
+
 function searchCustomer(btn){
   var block = btn.closest(".account-block");
+  if (!prepareAccountSearch(block)) return;
+  var search = {};
+  block.activeCustomerSearch = search;
   var q = block.querySelector(".search-input").value.trim();
   var statusEl = block.querySelector(".search-status");
-  if(!q){ statusEl.textContent=""; statusEl.className="search-status"; return; }
 
   if (DATA_MODE === "SUPABASE" && SUPABASE_URL && SUPABASE_ANON_KEY){
     statusEl.textContent = "⏳ ກຳລັງຄົ້ນຫາ..."; statusEl.className = "search-status";
-    var esc = q.replace(/[%*]/g, ""); // กันตัวอักษรพิเศษของ pattern matching หลุดเข้าไปใน query
-    var filter = "or=(contract.ilike.*" + encodeURIComponent(esc) + "*,customer.ilike.*" + encodeURIComponent(esc) + "*)&contract=not.ilike.*-*";
-    var url = SUPABASE_URL + "/rest/v1/data123?select=*&" + filter + "&limit=12";
+    var url = SUPABASE_URL + "/rest/v1/data123?select=*&contract=eq." + q + "&limit=1";
     sbFetch(url)
       .then(function(r){
         if (!r.ok){
@@ -2474,16 +2598,19 @@ function searchCustomer(btn){
         return r.json();
       })
       .then(function(rows){
+        if (block.activeCustomerSearch !== search) return;
         if (rows && rows.length){
           var r0 = rows[0];
           var cleanVal = function(v){ return (v===null||v===undefined||String(v).trim().toUpperCase()==="EMPTY") ? "" : v; };
           var hit = { CONTRACT:cleanVal(r0.contract), CURRENCY:cleanVal(r0.currency), CUSTOMER:cleanVal(r0.customer), TEL:cleanVal(r0.tel), ACCNAME:cleanVal(r0.accname), Addr:cleanVal(r0.addr) };
           applyHit(block, hit, statusEl, "data");
         } else {
+          clearUnmatchedCustomer(block);
           statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນ"; statusEl.className = "search-status err";
         }
       })
       .catch(function(err){
+        if (block.activeCustomerSearch !== search) return;
         if (err && err.message === "SESSION_EXPIRED"){
           statusEl.textContent = "⚠ ກະລຸນາ ເຂົ້າສູ່ລະບົບ (session expired)";
           statusEl.className = "search-status err";
@@ -2500,34 +2627,39 @@ function searchCustomer(btn){
     statusEl.textContent = "⏳ ກຳລັງຄົ້ນຫາ..."; statusEl.className = "search-status";
     jsonpRequest(SHEETS_API_URL + "?q=" + encodeURIComponent(q),
       function(rows){
-        if (rows && rows.length){
-          var r0 = rows[0];
+        if (block.activeCustomerSearch !== search) return;
+        var r0 = Array.isArray(rows) && rows.find(function(row){ return String(row.c) === q; });
+        if (r0){
           var hit = { CONTRACT:r0.c, CURRENCY:r0.cur, CUSTOMER:r0.n, TEL:r0.t, ACCNAME:r0.a, Addr:r0.b };
           applyHit(block, hit, statusEl, "data");
         } else {
+          clearUnmatchedCustomer(block);
           statusEl.textContent = "⚠ ບໍ່ພົບຂໍ້ມູນໃນ Google Sheets"; statusEl.className = "search-status err";
         }
       },
       function(err){
+        if (block.activeCustomerSearch !== search) return;
         statusEl.textContent = "✗ ເຊື່ອມຕໍ່ Sheets ບໍ່ໄດ້ (" + err.message + ")"; statusEl.className = "search-status err";
       }
     );
     return;
   }
 
-  q = q.toUpperCase();
-  var hit = sampleCustomers.find(function(c){ return c.CONTRACT.indexOf(q) >= 0 || c.CUSTOMER.toUpperCase().indexOf(q) >= 0; });
+  var hit = sampleCustomers.find(function(c){ return c.CONTRACT === q; });
   if(hit){
     applyHit(block, hit, statusEl, "demo");
   } else {
-    statusEl.textContent = "⚠ ບໍ່ພົບ — Demo data ມີພຽງ 3 ລາຍການ (ລອງ 0001 / 0002 / 0003)"; statusEl.className = "search-status err";
-    recompute();
+    clearUnmatchedCustomer(block);
+    statusEl.textContent = "⚠ ບໍ່ພົບ — Demo: 0330400410000001"; statusEl.className = "search-status err";
   }
 }
 
 /* สถานะของแถบแท็บทั้งหมด — ที่เดียวจบ ทั้งแท็บปกติ แท็บแบ่งครึ่ง และหัวกลุ่ม */
 function syncTabs(){
   var cur = getActivePanelId();
+  var actions = document.querySelector('#panel-' + cur + ' .txn-row');
+  var toolbar = document.querySelector('.bill-toolbar');
+  if (actions && toolbar && toolbar.parentElement !== actions) actions.appendChild(toolbar);
   document.querySelectorAll(".type-tabs button[data-type]").forEach(function(b){
     b.classList.toggle("active", b.getAttribute("data-type") === cur);
   });
@@ -2770,36 +2902,33 @@ function fmtAmount(n){
    ========================================================= */
 
 // ---------- ໃບມອບ (ใหม่) ----------
+var DENOM_BASE = { x:454.49, y:26.25, w:84.53, h:18, step:19 };
 var BASE_POS = {
-  customer: {x:8.49,   y:26.25,  w:284.21, h:23.25, va:'flex-end'},
-  tel:      {x:326.23, y:26.25,  w:88.91,  h:23.25, va:'flex-end'},
-  addr:     {x:8.49,   y:49.50,  w:205.51, h:24.75, va:'flex-end'},
-  accname:  {x:117.80, y:110.25, w:297.33, h:33.00, va:'flex-end'},
-  contract: {x:117.80, y:143.25, w:297.33, h:35.25, va:'center'},
-  cur:      {x:8.49,   y:178.50, w:109.31, h:18.75, va:'flex-start'},
-  amount:   {x:117.80, y:178.50, w:208.42, h:18.75, va:'flex-start'},
-  curword:  {x:326.23, y:178.50, w:88.91,  h:18.75, va:'flex-start'},
-  words:    {x:8.49,   y:197.25, w:406.64, h:18.75, va:'flex-end', wrap:true},
-  desc:     {x:117.80, y:216.00, w:297.33, h:18.75, va:'flex-start'},
+  customer: {x:8.49,   y:32.25,  w:284.21, h:DENOM_BASE.h, va:'center'},
+  tel:      {x:326.23, y:32.25,  w:88.91,  h:DENOM_BASE.h, va:'center'},
+  addr:     {x:8.49,   y:64.25,  w:205.51, h:DENOM_BASE.h, va:'center'},
+  accname:  {x:117.80, y:108.25, w:297.33, h:DENOM_BASE.h, va:'center'},
+  contract: {x:117.80, y:140.25, w:297.33, h:DENOM_BASE.h, va:'center'},
+  cur:      {x:8.49,   y:172.25, w:108.31, h:DENOM_BASE.h, va:'center'},
+  amount:   {x:117.80, y:172.25, w:207.42, h:DENOM_BASE.h, va:'center'},
+  curword:  {x:326.23, y:172.25, w:88.91,  h:DENOM_BASE.h, va:'center'},
+  words:    {x:8.49,   y:204.25, w:406.64, h:DENOM_BASE.h, va:'center', wrap:true},
+  desc:     {x:117.80, y:236.25, w:297.33, h:DENOM_BASE.h, va:'center'},
   date:     {x:454.49, y:-16.50, w:84.53,  h:20.25, va:'center'}
 };
-var DENOM_BASE = { x:454.49, w:84.53 };
-// J2..J17 = sheet rows 2..17 — ตำแหน่งคงที่ ไม่ขึ้นกับสะกุลเงิน
-var DENOM_ROW_TOPS = [26.25,49.5,74.25,91.5,110.25,125.25,143.25,159.75,178.5,197.25,216.0,234.75,253.5,272.25,291.0,309.75,329.25];
-var DENOM_ROW_H    = [23.25,24.75,17.25,18.75,15.0,18.0,16.5,18.75,18.75,18.75,18.75,18.75,18.75,18.75,18.75,19.5,19.5];
 
 // ---------- ໃບມອບເກົ່າ ----------
 var BASE_POS_OLD = {
-  customer: {x:0.00,   y:26.25,  w:284.21, h:19.50, va:'flex-end'},
-  tel:      {x:317.74, y:26.25,  w:89.64,  h:19.50, va:'flex-end'},
-  addr:     {x:0.00,   y:45.75,  w:205.51, h:21.00, va:'flex-end'},
-  accname:  {x:109.31, y:102.75, w:298.06, h:33.00, va:'flex-end'},
-  contract: {x:165.43, y:135.75, w:152.31, h:34.50, va:'center'},
-  cur:      {x:0.00,   y:170.25, w:109.31, h:18.75, va:'flex-start'},
-  amount:   {x:165.43, y:170.25, w:152.31, h:18.75, va:'flex-start'},
-  curword:  {x:317.74, y:170.25, w:89.64,  h:18.75, va:'flex-end'},
-  words:    {x:0.00,   y:189.00, w:407.37, h:20.25, va:'flex-end', wrap:true},
-  desc:     {x:109.31, y:209.25, w:298.06, h:39.00, va:'center'},
+  customer: {x:0.00,   y:27,  w:284.21, h:DENOM_BASE.h, va:'flex-end'},
+  tel:      {x:317.74, y:27,  w:89.64,  h:DENOM_BASE.h, va:'flex-end'},
+  addr:     {x:0.00,   y:47.25,  w:205.51, h:DENOM_BASE.h, va:'flex-end'},
+  accname:  {x:109.31, y:110.25, w:298.06, h:DENOM_BASE.h, va:'flex-end'},
+  contract: {x:165.43, y:144, w:152.31, h:DENOM_BASE.h, va:'center'},
+  cur:      {x:0.00,   y:170.625, w:109.31, h:DENOM_BASE.h, va:'flex-start'},
+  amount:   {x:165.43, y:170.625, w:152.31, h:DENOM_BASE.h, va:'flex-start'},
+  curword:  {x:317.74, y:170.625, w:89.64,  h:DENOM_BASE.h, va:'flex-end'},
+  words:    {x:0.00,   y:190.125, w:407.37, h:DENOM_BASE.h, va:'flex-end', wrap:true},
+  desc:     {x:109.31, y:219.75, w:298.06, h:DENOM_BASE.h, va:'center'},
   total:    {x:452.55, y:209.25, w:84.54,  h:39.00, va:'center'},
   symbol:   {x:525.77, y:209.25, w:29.15,  h:39.00, va:'center'},
   date:     {x:452.55, y:-16.50, w:84.54,  h:20.25, va:'center'}
@@ -2811,16 +2940,16 @@ var DENOM_ROW_H_OLD    = [19.5,21.0,17.25,18.75,15.0,18.0,16.5,18.0,18.75];
 
 // ---------- ໃບຖອນ ----------
 var BASE_POS_WD = {
-  accname:  {x:75.79, y:23.25,  w:281.30, h:16.50, va:'center'},
-  addr1:    {x:0.00,  y:39.75,  w:176.36, h:15.00, va:'flex-start'},
-  tel:      {x:75.79, y:54.75,  w:150.85, h:21.00, va:'flex-start'},
-  customer: {x:75.79, y:75.75,  w:281.30, h:18.75, va:'center'},
-  addr2:    {x:0.00,  y:94.50,  w:176.36, h:15.75, va:'flex-start'},
-  contract: {x:75.79, y:110.25, w:150.85, h:19.15, va:'flex-end'},
-  cur:      {x:0.00,  y:129.40, w:75.79,  h:21.75, va:'flex-end'},
-  amount:   {x:126.07,y:129.40, w:100.57, h:21.75, va:'flex-start'},
-  curword:  {x:226.64,y:129.40, w:130.45, h:21.75, va:'flex-start'},
-  words:    {x:75.79, y:151.15, w:281.30, h:23.25, va:'flex-end', wrap:true},
+  accname:  {x:75.79, y:22.5,  w:281.30, h:DENOM_BASE.h, va:'center'},
+  addr1:    {x:0.00,  y:40.75,  w:176.36, h:DENOM_BASE.h, va:'flex-start'},
+  tel:      {x:75.79, y:59,  w:150.85, h:DENOM_BASE.h, va:'flex-start'},
+  customer: {x:75.79, y:77.25,  w:281.30, h:DENOM_BASE.h, va:'center'},
+  addr2:    {x:0.00,  y:95.5,  w:176.36, h:DENOM_BASE.h, va:'flex-start'},
+  contract: {x:75.79, y:113.75, w:150.85, h:DENOM_BASE.h, va:'flex-end'},
+  cur:      {x:0.00,  y:131.275, w:75.79,  h:DENOM_BASE.h, va:'flex-end'},
+  amount:   {x:126.07,y:132, w:100.57, h:DENOM_BASE.h, va:'flex-start'},
+  curword:  {x:226.64,y:131.275, w:130.45, h:DENOM_BASE.h, va:'flex-start'},
+  words:    {x:75.79, y:153.775, w:281.30, h:DENOM_BASE.h, va:'flex-end', wrap:true},
   date:     {x:393.01, y:-16.50, w:86.00,  h:20.25, va:'center'}
 };
 var DENOM_BASE_WD_LABEL = { x:339.09, w:53.92 };
@@ -2830,23 +2959,23 @@ var DENOM_ROW_H_WD    = [15.0,21.0,18.75,15.75,19.15,21.75,23.25,18.75,18.75];
 
 // ---------- ໃບໂອນ ----------
 var BASE_POS_TR = {
-  from_customer:{x:105.67, y:25.50,  w:249.23, h:21.75, va:'flex-end'},
-  from_tel:     {x:423.40, y:25.50,  w:115.14, h:21.75, va:'flex-end'},
-  from_addr:    {x:100.83, y:47.25,  w:249.23, h:21.00, va:'flex-end'},
-  nps_accname:  {x:310.45, y:68.25,  w:228.10, h:43.50, va:'center'},
-  cheque_no:    {x:105.67, y:111.75, w:145.75, h:19.50, va:'flex-end'},
-  nps_accnum:   {x:354.90, y:111.75, w:183.64, h:19.50, va:'flex-end'},
-  cheque_date:  {x:105.67, y:131.25, w:145.75, h:15.75, va:'flex-end'},
-  nps_bank:     {x:310.45, y:131.25, w:228.10, h:15.75, va:'flex-end'},
-  from_accname: {x:0.00,   y:172.50, w:251.42, h:26.25, va:'flex-end'},
-  to_accname:   {x:310.45, y:172.50, w:228.10, h:26.25, va:'flex-end'},
-  from_contract:{x:0.00,   y:198.75, w:217.90, h:24.75, va:'flex-end'},
-  to_contract:  {x:310.45, y:198.75, w:165.43, h:24.75, va:'flex-end'},
-  cur:          {x:58.30,  y:223.50, w:47.37,  h:21.75, va:'flex-end'},
-  amount:       {x:169.80, y:223.50, w:140.65, h:21.75, va:'flex-start'},
-  curword:      {x:310.45, y:223.50, w:44.45,  h:21.75, va:'flex-start'},
-  words:        {x:105.67, y:246.00, w:249.23, h:19.50, va:'flex-end', wrap:true},
-  desc:         {x:105.67, y:265.50, w:249.23, h:19.50, va:'center'},
+  from_customer:{x:105.67, y:27.375,  w:249.23, h:DENOM_BASE.h, va:'flex-end'},
+  from_tel:     {x:423.40, y:27.375,  w:115.14, h:DENOM_BASE.h, va:'flex-end'},
+  from_addr:    {x:100.83, y:48.75,  w:249.23, h:DENOM_BASE.h, va:'flex-end'},
+  nps_accname:  {x:310.45, y:81,  w:228.10, h:DENOM_BASE.h, va:'center'},
+  cheque_no:    {x:105.67, y:112.5, w:145.75, h:DENOM_BASE.h, va:'flex-end'},
+  nps_accnum:   {x:354.90, y:112.5, w:183.64, h:DENOM_BASE.h, va:'flex-end'},
+  cheque_date:  {x:105.67, y:130.75, w:145.75, h:DENOM_BASE.h, va:'flex-end'},
+  nps_bank:     {x:310.45, y:130.75, w:228.10, h:DENOM_BASE.h, va:'flex-end'},
+  from_accname: {x:0.00,   y:176.625, w:251.42, h:DENOM_BASE.h, va:'flex-end'},
+  to_accname:   {x:310.45, y:176.625, w:228.10, h:DENOM_BASE.h, va:'flex-end'},
+  from_contract:{x:0.00,   y:202.125, w:217.90, h:DENOM_BASE.h, va:'flex-end'},
+  to_contract:  {x:310.45, y:202.125, w:165.43, h:DENOM_BASE.h, va:'flex-end'},
+  cur:          {x:58.30,  y:225.375, w:47.37,  h:DENOM_BASE.h, va:'flex-end'},
+  amount:       {x:169.80, y:225.375, w:140.65, h:DENOM_BASE.h, va:'flex-start'},
+  curword:      {x:310.45, y:225.375, w:44.45,  h:DENOM_BASE.h, va:'flex-start'},
+  words:        {x:105.67, y:246.75, w:249.23, h:DENOM_BASE.h, va:'flex-end', wrap:true},
+  desc:         {x:105.67, y:266.25, w:249.23, h:DENOM_BASE.h, va:'center'},
   date:         {x:423.40, y:-16.50, w:115.14, h:20.25, va:'center'}
 };
 
@@ -2917,6 +3046,89 @@ var FONT_KEYS     = ['money','denom','words','account'];
 var FONT_DEFAULTS = { money:12, denom:10, words:12, account:11 };
 var FONT_MIN = 9, FONT_MAX = 13, FONT_STEP = 0.5;
 var FONT_SIZES = {};
+var PREVIEW_SIZES_KEY = 'ez_print_sizes_v1';
+var previewSizes = {};
+try { previewSizes = JSON.parse(localStorage.getItem(PREVIEW_SIZES_KEY)) || {}; }
+catch (e) { /* Use the configured defaults when storage is unavailable. */ }
+if (typeof previewSizes !== 'object' || Array.isArray(previewSizes)) previewSizes = {};
+var FIELD_SIZE_KEY = 'ez_print_field_sizes_v1';
+var fieldSizes = {};
+try { fieldSizes = JSON.parse(localStorage.getItem(FIELD_SIZE_KEY)) || {}; }
+catch (e) { /* Use the form defaults if storage is unavailable. */ }
+if (typeof fieldSizes !== 'object' || Array.isArray(fieldSizes)) fieldSizes = {};
+var selectedSizeField = '';
+var SIZE_FIELD_SELECTOR = '.pf[data-field], .pf[data-size-field]';
+var sizePreviewStage = document.getElementById('previewStage');
+
+function sizeFieldKey(field){
+  return field.dataset.sizeField || field.dataset.field;
+}
+
+function applyFieldSizes(container, type){
+  var sizes = fieldSizes[type] || {};
+  container.querySelectorAll(SIZE_FIELD_SELECTOR).forEach(function(field){
+    var size = sizes[sizeFieldKey(field)];
+    if (Number.isFinite(size)) field.style.setProperty('font-size', clampFont(size) + 'pt', 'important');
+    else field.style.removeProperty('font-size');
+  });
+}
+
+function syncFieldSizeEditor(){
+  var active;
+  sizePreviewStage.querySelectorAll(SIZE_FIELD_SELECTOR).forEach(function(field){
+    field.tabIndex = 0;
+    var selected = sizeFieldKey(field) === selectedSizeField;
+    field.classList.toggle('size-selected', selected);
+    if (selected) active = field;
+  });
+  document.getElementById('previewFieldSize').hidden = !active;
+  document.getElementById('previewSizeHint').hidden = !!active;
+  if (!active) return;
+  var size = Math.round(parseFloat(getComputedStyle(active).fontSize) * 1.5) / 2;
+  var denomination = /^(denom|denomLabel)(\d+)$/.exec(selectedSizeField);
+  var label = FIELD_LABELS[selectedSizeField];
+  if (denomination){
+    var row = Number(denomination[2]);
+    var total = CALIB_TYPE === 'deposit' ? row === PRINT_DENOM_SLOTS : row === DENOM_ROW_TOPS_WD.length;
+    label = total ? 'ຍອດລວມ' : (denomination[1] === 'denomLabel' ? 'ຊະນິດເງິນ ' : 'ແຍກເງິນ ') + (row + 1);
+  }
+  document.getElementById('previewFieldLabel').textContent = label || selectedSizeField;
+  document.getElementById('fieldSizeValue').value = size + ' pt';
+  document.getElementById('fieldSizeMinus').disabled = size <= FONT_MIN;
+  document.getElementById('fieldSizePlus').disabled = size >= FONT_MAX;
+  document.getElementById('fieldSizeReset').disabled = !Number.isFinite((fieldSizes[CALIB_TYPE] || {})[selectedSizeField]);
+}
+
+function selectSizeField(event){
+  var field = event.target.closest(SIZE_FIELD_SELECTOR);
+  if (!field) return;
+  selectedSizeField = sizeFieldKey(field);
+  syncFieldSizeEditor();
+}
+
+sizePreviewStage.addEventListener('click', selectSizeField);
+sizePreviewStage.addEventListener('keydown', function(event){
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  if (!event.target.matches(SIZE_FIELD_SELECTOR)) return;
+  event.preventDefault();
+  selectSizeField(event);
+  document.getElementById('previewFieldSize').querySelector('button:not(:disabled)')?.focus();
+});
+
+function changeFieldSize(direction){
+  if (!selectedSizeField) return;
+  var sizes = fieldSizes[CALIB_TYPE] = Object.assign({}, fieldSizes[CALIB_TYPE]);
+  if (direction){
+    var current = parseFloat(document.getElementById('fieldSizeValue').value);
+    sizes[selectedSizeField] = clampFont(current + direction * FONT_STEP);
+  } else {
+    delete sizes[selectedSizeField];
+  }
+  try { localStorage.setItem(FIELD_SIZE_KEY, JSON.stringify(fieldSizes)); }
+  catch (e) { /* Keep current selections for this session. */ }
+  applyFieldSizes(sizePreviewStage, CALIB_TYPE);
+  syncFieldSizeEditor();
+}
 
 function defaultFonts(){
   var o = {}; FONT_KEYS.forEach(function(k){ o[k] = FONT_DEFAULTS[k]; }); return o;
@@ -3075,18 +3287,66 @@ function pushCalibToCloudDebounced(){
 
 function fieldOff(name){ var t = CALIB_TYPE; return (FIELD_OFFSETS[t] && FIELD_OFFSETS[t][name]) || {x:0,y:0}; }
 
+var PRINT_TYPOGRAPHY_KEY = 'ez_print_typography_v1';
+var PRINT_LAO_FONTS = new Map([
+  ['phetsarath', "'Phetsarath OT','Noto Sans Lao','IBM Plex Sans',sans-serif"],
+  ['noto', "'Noto Sans Lao','Phetsarath OT','IBM Plex Sans',sans-serif"]
+]);
+var PRINT_NUMBER_FONTS = new Map([
+  ['tahoma', "Tahoma,'IBM Plex Sans',Arial,sans-serif"],
+  ['calibri', 'Calibri,Tahoma,Arial,sans-serif'],
+  ['arial', 'Arial,Tahoma,sans-serif']
+]);
+
+function loadPrintTypography(){
+  try { return JSON.parse(localStorage.getItem(PRINT_TYPOGRAPHY_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+
+var printTypography = loadPrintTypography();
+
+function applyPrintTypography(){
+  var lao = PRINT_LAO_FONTS.has(printTypography.lao) ? printTypography.lao : 'phetsarath';
+  var numbers = PRINT_NUMBER_FONTS.has(printTypography.numbers) ? printTypography.numbers : 'tahoma';
+  var weight = printTypography.weight === '700' ? '700' : '600';
+  var style = document.documentElement.style;
+  style.setProperty('--print-font-lao', PRINT_LAO_FONTS.get(lao));
+  style.setProperty('--print-font-numeric', PRINT_NUMBER_FONTS.get(numbers));
+  style.setProperty('--print-text-weight', weight);
+  document.getElementById('printLaoFont').value = lao;
+  document.getElementById('printNumberFont').value = numbers;
+  document.getElementById('printTextWeight').value = weight;
+}
+
+function savePrintTypography(){
+  printTypography = {
+    lao:document.getElementById('printLaoFont').value,
+    numbers:document.getElementById('printNumberFont').value,
+    weight:document.getElementById('printTextWeight').value
+  };
+  applyPrintTypography();
+  try { localStorage.setItem(PRINT_TYPOGRAPHY_KEY, JSON.stringify(printTypography)); }
+  catch (e) { /* Keep the current selection when storage is unavailable. */ }
+}
+
 function applyPageOffset(){
   var t = CALIB_TYPE;
   var po = PAGE_OFFSET[t] || {x:0,y:0};
   document.documentElement.style.setProperty('--print-offset-x', po.x + 'pt');
   document.documentElement.style.setProperty('--print-offset-y', po.y + 'pt');
   applyFontSizes();
+  applyPrintTypography();
 }
 
 /* เขียนขนาดฟอนต์ของใบที่กำลังปรับอยู่ลง :root — พรีวิวกับตอนพิมพ์จึงเห็นเท่ากัน */
 function applyFontSizes(){
   var f = curFonts(), root = document.documentElement;
-  FONT_KEYS.forEach(function(k){ root.style.setProperty('--fs-'+k, f[k] + 'pt'); });
+  var localSizes = previewSizes[CALIB_TYPE] || {};
+  ['general'].concat(FONT_KEYS).forEach(function(key){
+    var baseSize = key === 'general' ? 11 : f[key];
+    var size = Number.isFinite(localSizes[key]) ? clampFont(localSizes[key], key) : baseSize;
+    root.style.setProperty('--fs-' + key, size + 'pt');
+  });
   syncFontUI();
 }
 
@@ -3150,33 +3410,46 @@ function buildDepositGrid(){
     curword:esc(curWord), words:esc(words), desc:esc(desc)
   };
 
-  applyPageOffset();
-  var origin = document.getElementById("depositOrigin");
-  var html = "";
-  Object.keys(BASE_POS).forEach(function(name){
-    var p = BASE_POS[name], o = fieldOff(name);
-    var va = p.va==='center' ? '' : (p.va==='flex-start' ? 'v-top' : 'v-bottom');
-    var wrapc = p.wrap ? ' wrap-text' : '';
-    html += '<div class="pf '+va+wrapc+'" data-field="'+name+'" style="'+
-      'left:'+(p.x+o.x)+'pt; top:'+(p.y+o.y)+'pt; width:'+p.w+'pt; height:'+p.h+'pt;">'+
-      values[name]+'</div>';
-  });
-  // denom column — ใช้ bySlot (ตำแหน่งคงที่ตาม Excel จริง ไม่เลื่อนตามสะกุลเงิน)
-  // แต่ละแถวขยับเองได้อิสระ (offset แยกต่อแถว ไม่รวมกันแล้ว)
-  for (var i=0; i<PRINT_DENOM_SLOTS; i++){
-    var val = (d.bySlot && d.bySlot[i]) || 0;
-    var odi = fieldOff('denom'+i);
-    html += '<div class="pf small" data-field="denom'+i+'" data-denomidx="'+i+'" style="'+
-      'left:'+(DENOM_BASE.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS[i]+odi.y)+'pt; '+
-      'width:'+DENOM_BASE.w+'pt; height:'+DENOM_ROW_H[i]+'pt;">'+fmtAmount(val)+'</div>';
+  var positions = Object.assign({}, BASE_POS);
+  for (var i=0; i<=PRINT_DENOM_SLOTS; i++){
+    var key = 'denom'+i;
+    positions[key] = {
+      x:DENOM_BASE.x, y:DENOM_BASE.y+i*DENOM_BASE.step,
+      w:DENOM_BASE.w, h:DENOM_BASE.h, va:'center'
+    };
+    // Total is always in the final row, including amounts with decimals.
+    values[key] = fmtAmount(i===PRINT_DENOM_SLOTS ? total : ((d.bySlot && d.bySlot[i]) || 0));
   }
-  // ช่อง 17 — ยอดรวมทั้งหมด รวมทศนิยม (ไม่ว่าจะสกุลเงินใด ก็ต้องไปอยู่ช่องนี้เสมอ)
-  var od16 = fieldOff('denom16');
-  html += '<div class="pf small" data-field="denom16" data-denomidx="16" style="'+
-    'left:'+(DENOM_BASE.x+od16.x)+'pt; top:'+(DENOM_ROW_TOPS[16]+od16.y)+'pt; '+
-    'width:'+DENOM_BASE.w+'pt; height:'+DENOM_ROW_H[16]+'pt;">'+fmtAmount(total)+'</div>';
-  origin.innerHTML = html;
+
+  var origin = renderFieldsToOrigin('depositOrigin', positions, values);
+  var boxes = [];
+  origin.querySelectorAll('.pf').forEach(function(el){
+    var name = el.dataset.field;
+    var x = parseFloat(el.style.left);
+    var y = parseFloat(el.style.top);
+    var box = { name:name, x:x, y:y, right:x+positions[name].w, bottom:y+positions[name].h };
+    boxes.push(box);
+    if (name.startsWith('denom')){
+      el.classList.add('small');
+      el.dataset.denomidx = name.slice(5);
+    }
+  });
+
+  // Check saved per-field offsets as well as the base layout.
+  var overlapping = new Set();
+  boxes.forEach(function(a, i){
+    for (var j=i+1; j<boxes.length; j++){
+      var b = boxes[j];
+      if (Math.min(a.right, b.right)-Math.max(a.x, b.x) > 0.01 &&
+          Math.min(a.bottom, b.bottom)-Math.max(a.y, b.y) > 0.01){
+        overlapping.add(FIELD_LABELS[a.name] || a.name);
+        overlapping.add(FIELD_LABELS[b.name] || b.name);
+      }
+    }
+  });
+  origin.dataset.overlap = Array.from(overlapping).join(', ');
 }
+
 
 function renderFieldsToOrigin(originId, posTable, values){
   applyPageOffset();
@@ -3225,7 +3498,7 @@ function buildOldDepositGrid(){
     var val = (d.bySlot && d.bySlot[i]) || 0;
     var lbl = (tiers[i] === 0) ? '' : Number(tiers[i]).toLocaleString();
     var odi = fieldOff('denom'+i);
-    html += '<div class="pf small" style="left:'+(DENOM_BASE_OLD_LABEL.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_OLD[i]+odi.y)+'pt; width:'+DENOM_BASE_OLD_LABEL.w+'pt; height:'+DENOM_ROW_H_OLD[i]+'pt; justify-content:flex-end;">'+lbl+'</div>';
+    html += '<div class="pf small" data-size-field="denomLabel'+i+'" style="left:'+(DENOM_BASE_OLD_LABEL.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_OLD[i]+odi.y)+'pt; width:'+DENOM_BASE_OLD_LABEL.w+'pt; height:'+DENOM_ROW_H_OLD[i]+'pt; justify-content:flex-end;">'+lbl+'</div>';
     html += '<div class="pf small" data-field="denom'+i+'" data-denomidx="'+i+'" style="left:'+(DENOM_BASE_OLD.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_OLD[i]+odi.y)+'pt; width:'+DENOM_BASE_OLD.w+'pt; height:'+DENOM_ROW_H_OLD[i]+'pt;">'+fmtAmount(val)+'</div>';
   }
   origin.innerHTML = html;
@@ -3237,7 +3510,7 @@ function buildWithdrawGrid(){
   var customer = fieldVal(block,"CUSTOMER");
   var tel = fieldVal(block,"TEL");
   var addr = fieldVal(block,"Addr");
-  var accname = (document.getElementById('withdrawerName')||{}).value || fieldVal(block,"ACCNAME") || customer;
+  var withdrawerName = block.querySelector('#withdrawerName').value.trim() || customer;
   var contract = fieldVal(block,"CONTRACT");
   var cur = fieldVal(block,"CURRENCY") || "LAK";
   var d = getDenomSubtotals();
@@ -3252,7 +3525,7 @@ function buildWithdrawGrid(){
     date: esc(billDateStr()),
     accname:esc(customer),               // แถวบน  = ຊື່ບັນຊີ (จากฐานข้อมูล)
     addr1:esc(addr), tel:esc(tel),
-    customer:esc(accname),               // แถวล่าง = ຊື່ຜູ້ຖອນ (teller กรอกเอง)
+    customer:esc(withdrawerName),        // แถวล่าง = ຊື່ຜູ້ຖອນ (teller กรอกเอง)
     addr2:esc(addr),
     contract:esc(contract), cur:esc(cur), amount:fmtAmount(total), curword:esc(curWord), words:esc(words)
   };
@@ -3270,7 +3543,7 @@ function buildWithdrawGrid(){
     var val = (d.bySlot && d.bySlot[i]) || 0;
     var lbl = Number(tiers[i]).toLocaleString();
     var odi = fieldOff('denom'+i);
-    html += '<div class="pf small" style="left:'+(DENOM_BASE_WD_LABEL.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[i]+odi.y)+'pt; width:'+DENOM_BASE_WD_LABEL.w+'pt; height:'+DENOM_ROW_H_WD[i]+'pt; justify-content:flex-end;">'+lbl+'</div>';
+    html += '<div class="pf small" data-size-field="denomLabel'+i+'" style="left:'+(DENOM_BASE_WD_LABEL.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[i]+odi.y)+'pt; width:'+DENOM_BASE_WD_LABEL.w+'pt; height:'+DENOM_ROW_H_WD[i]+'pt; justify-content:flex-end;">'+lbl+'</div>';
     html += '<div class="pf small" data-field="denom'+i+'" data-denomidx="'+i+'" style="left:'+(DENOM_BASE_WD.x+odi.x)+'pt; top:'+(DENOM_ROW_TOPS_WD[i]+odi.y)+'pt; width:'+DENOM_BASE_WD.w+'pt; height:'+DENOM_ROW_H_WD[i]+'pt;">'+fmtAmount(val)+'</div>';
   }
   // ช่องผลลัพธ์รวมเงิน — แยกออกจากช่องกรอกจำนวนเงินด้านบนอย่างชัดเจน วาดที่แถวสุดท้ายตายตัวเสมอทุกสกุลเงิน
@@ -3336,6 +3609,7 @@ var PRINT_PAGE_IDS = {
 function buildActiveGrid(type){
   CALIB_TYPE = type;
   (PRINT_BUILDERS[type] || buildDepositGrid)();
+  applyFieldSizes(document.getElementById(PRINT_PAGE_IDS[type] || 'printPage-deposit'), type);
 }
 
 function fitPreviewScale(){
@@ -3349,6 +3623,7 @@ function fitPreviewScale(){
 }
 
 function openPreview(calib){
+  selectedSizeField = '';
   CALIB_MODE = !!calib;
   recompute();
   var type = printLayoutFor(getActivePanelId());
@@ -3359,6 +3634,7 @@ function openPreview(calib){
   var clone = src.cloneNode(true);
   clone.style.display = 'block';
   stage.appendChild(clone);
+  syncFieldSizeEditor();
   stage.classList.toggle('calib', CALIB_MODE);
   fitPreviewScale();
   document.getElementById('previewOverlay').classList.add('open');
@@ -3420,7 +3696,7 @@ function bindFieldDrag(){
 
 function bindFieldClicks(){
   var stage = document.getElementById('previewStage');
-  stage.querySelectorAll('.pf').forEach(function(el){
+  stage.querySelectorAll('.pf[data-field]').forEach(function(el){
     el.onclick = function(){ selectTarget(el.getAttribute('data-field')); };
   });
 }
@@ -3450,6 +3726,7 @@ function refreshPreview(){
   var clone = src.cloneNode(true);
   clone.style.display = 'block';
   stage.appendChild(clone);
+  syncFieldSizeEditor();
   if (CALIB_MODE){ bindFieldClicks(); bindFieldDrag(); selectTarget(sel); }
 }
 
@@ -3538,6 +3815,13 @@ function doPrint(type){
     if (el) el.style.display = "none";
   });
   buildActiveGrid(layout);
+  if (layout === 'deposit'){
+    var overlap = document.getElementById('depositOrigin').dataset.overlap;
+    if (overlap){
+      alert('ຕຳແໜ່ງພິມຊ້ອນກັນ: ' + overlap + '\nກະລຸນາປັບຕຳແໜ່ງພິມກ່ອນພິມ');
+      return;
+    }
+  }
   var pageId = PRINT_PAGE_IDS[layout] || 'printPage-deposit';
   document.getElementById(pageId).style.display = "block";
   setTimeout(function(){ window.print(); }, 30);
@@ -3554,13 +3838,9 @@ var DRAFT_MAX_AGE_MS = 12 * 60 * 60 * 1000; // เกิน 12 ชม. ถือ
 var DRAFT_LOADING = false;
 var draftTimer = null;
 
-var LAST_TELLER_EMAIL = null;
 function draftKey(){
-  var em = (currentSession && currentSession.user && currentSession.user.email) || null;
-  if (em) LAST_TELLER_EMAIL = em;
-  // ถ้า session เพิ่งถูกล้าง (token หมดอายุ) ยังใช้ key ของ teller คนเดิม
-  // ไม่งั้น draft จะไปตกอยู่ใต้ key "anon" แล้วกู้กลับไม่เจอตอน login ใหม่
-  return DRAFT_KEY_BASE + ":" + (em || LAST_TELLER_EMAIL || "anon");
+  var user = currentSession && currentSession.user;
+  return user && user.id === billUserId && user.email ? DRAFT_KEY_BASE + ":" + user.email : null;
 }
 
 function collectDraft(){
@@ -3577,6 +3857,7 @@ function collectDraft(){
   });
   ["descSelect-deposit","descSelect-deposit_old","descSelect-transfer",
    "descCustom-deposit","descCustom-deposit_old","descCustom-transfer",
+   "withdrawerName","transferOrderer","npsBank","npsAccName","npsAccNumber",
    "chequeNo","chequeDate","singleAmount","expectedAmount","billDate"].forEach(function(id){
     var el = document.getElementById(id);
     if (el) d.misc[id] = el.value;
@@ -3585,32 +3866,49 @@ function collectDraft(){
   if (cq) d.misc.__cheque = cq.checked;
   if (LAST_DENOM_KEY) DENOM_CACHE[LAST_DENOM_KEY] = snapshotDenom();
   d.denom = DENOM_CACHE;
+  d.dateEdited = document.getElementById("billDate").dataset.edited === "yes";
   return d;
 }
 
 function draftIsEmpty(d){
   var k;
-  for (k in d.fields) if (d.fields[k]) return false;
-  for (k in d.misc) if (d.misc[k] && k !== "__cheque") return false;
-  for (k in d.denom) for (var s2 in d.denom[k]) if (d.denom[k][s2]) return false;
+  for (k in d.fields){
+    if (k.endsWith("|CURRENCY") && d.fields[k] === "LAK") continue;
+    if (String(d.fields[k] || "").trim()) return false;
+  }
+  for (k in d.misc){
+    var value = d.misc[k];
+    if (k === "billDate"){
+      if (d.dateEdited || (d.dateEdited == null && value !== todayStr(new Date(d.ts)))) return false;
+      continue;
+    }
+    if (k.startsWith("descSelect-") && value === DESC_SHARED[0]) continue;
+    if (String(value || "").trim()) return false;
+  }
+  for (k in d.denom) for (var slot in d.denom[k]){
+    if (Number(String(d.denom[k][slot]).replace(/,/g, "")) !== 0) return false;
+  }
   return true;
 }
 
 function saveDraftNow(){
-  if (DRAFT_LOADING) return;
+  var key = draftKey();
+  if (DRAFT_LOADING || !key) return;
   try{
     var d = collectDraft();
-    if (draftIsEmpty(d)) { localStorage.removeItem(draftKey()); return; }
-    localStorage.setItem(draftKey(), JSON.stringify(d));
+    if (draftIsEmpty(d)) { localStorage.removeItem(key); return; }
+    localStorage.setItem(key, JSON.stringify(d));
   }catch(e){ /* localStorage เต็ม/ปิดอยู่ — ไม่เป็นไร ใช้งานต่อได้ */ }
 }
 function saveDraftSoon(){
   if (DRAFT_LOADING) return;
   clearTimeout(draftTimer);
-  draftTimer = setTimeout(saveDraftNow, 400);
+  var key = draftKey();
+  if (key) draftTimer = setTimeout(function(){ if (draftKey() === key) saveDraftNow(); }, 400);
 }
 function clearDraft(){
-  try{ localStorage.removeItem(draftKey()); }catch(e){}
+  var key = draftKey();
+  try{ if (key) localStorage.removeItem(key); }catch(e){}
 }
 
 function showDraftBar(ts){
@@ -3628,16 +3926,15 @@ function hideDraftBar(){
 }
 
 function restoreDraft(){
-  var raw = null, usedAnon = false;
+  var key = draftKey(), raw;
+  if (!key) return;
   try{
-    raw = localStorage.getItem(draftKey());
-    if (!raw){ raw = localStorage.getItem(DRAFT_KEY_BASE + ":anon"); usedAnon = !!raw; }
+    raw = localStorage.getItem(key);
   }catch(e){ return; }
   if (!raw) return;
-  if (usedAnon){ try{ localStorage.removeItem(DRAFT_KEY_BASE + ":anon"); }catch(e){} }
   var d = null;
   try{ d = JSON.parse(raw); }catch(e){ clearDraft(); return; }
-  if (!d || !d.ts || (Date.now() - d.ts) > DRAFT_MAX_AGE_MS){ clearDraft(); return; }
+  if (!d || !d.ts || (Date.now() - d.ts) > DRAFT_MAX_AGE_MS || draftIsEmpty(d)){ clearDraft(); return; }
 
   DRAFT_LOADING = true;
   try{
@@ -3649,7 +3946,7 @@ function restoreDraft(){
       var el = (parts[2] === "__q")
         ? block.querySelector(".search-input")
         : block.querySelector('[data-field="' + parts[2] + '"]');
-      if (el && d.fields[k]) el.value = d.fields[k];
+      if (el) el.value = d.fields[k];
     });
     Object.keys(d.misc || {}).forEach(function(id){
       if (id === "__cheque"){
@@ -3659,7 +3956,7 @@ function restoreDraft(){
         return;
       }
       var el = document.getElementById(id);
-      if (el && d.misc[id]) el.value = d.misc[id];
+      if (el) el.value = d.misc[id];
     });
     ["deposit","deposit_old","transfer"].forEach(function(t){
       var sel = document.getElementById("descSelect-" + t);
@@ -3670,6 +3967,7 @@ function restoreDraft(){
     rebuildDenomRows();
     recompute();
     showDraftBar(d.ts);
+    document.getElementById("billDate").dataset.edited = (d.dateEdited ?? (d.misc && "billDate" in d.misc && d.misc.billDate !== todayStr(new Date(d.ts)))) ? "yes" : "";
   } finally {
     DRAFT_LOADING = false;
   }
@@ -3677,6 +3975,13 @@ function restoreDraft(){
 
 function clearForm(){
   if (!confirm("ລ້າງຂໍ້ມູນທັງໝົດໃນຟອມນີ້ ແລະ ເລີ່ມໃບໃໝ່ບໍ?")) return;
+  resetBillInputs();
+  clearDraft();
+  focusActiveSearch();
+}
+
+function resetBillInputs(){
+  clearTimeout(draftTimer);
   DRAFT_LOADING = true;
   document.querySelectorAll("#viewBill .panel").forEach(function(p){
     p.querySelectorAll("[data-field]").forEach(function(el){
@@ -3685,7 +3990,7 @@ function clearForm(){
     p.querySelectorAll(".search-input").forEach(function(el){ el.value = ""; });
     p.querySelectorAll(".search-status").forEach(function(el){ el.textContent = ""; el.className = "search-status"; });
   });
-  ["descCustom-deposit","descCustom-deposit_old","descCustom-transfer",
+  ["transferOrderer","npsBank","npsAccNumber","npsAccName","withdrawerName","descCustom-deposit","descCustom-deposit_old","descCustom-transfer",
    "chequeNo","chequeDate","singleAmount","expectedAmount"].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value = "";
   });
@@ -3693,18 +3998,16 @@ function clearForm(){
     var sel = document.getElementById("descSelect-" + t);
     if (sel){ sel.selectedIndex = 0; onDescChange(sel, t); }
   });
-  var cq = document.querySelector("#panel-transfer .nps-toggle input[type=checkbox]");
-  var body = document.getElementById("cheque-sub-body");
-  if (cq){ cq.checked = false; if (body) body.classList.remove("open"); }
+  document.querySelectorAll("#panel-transfer .nps-toggle input").forEach(function(input){ input.checked = false; });
+  ["nps-body","cheque-sub-body"].forEach(function(id){ document.getElementById(id).classList.remove("open"); });
   DENOM_CACHE = {};
   LAST_DENOM_KEY = null;
   initBillDate(true);          // ใบใหม่ = วันที่วันนี้เสมอ
   rebuildDenomRows();
   recompute();
   DRAFT_LOADING = false;
-  focusActiveSearch();
-  clearDraft();
   hideDraftBar();
+  clearSearchAddresses();
 }
 
 function onBillMutate(e){
@@ -3843,20 +4146,21 @@ document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeA
    ວັນທີ — เติมวันที่ของวันนี้ให้อัตโนมัติ (dd/mm/yyyy)
    teller แก้เองได้ถ้าต้องพิมพ์ใบย้อนหลัง
    ========================================================= */
-function todayStr(){
-  var d = new Date(), p = function(n){ return (n < 10 ? "0" : "") + n; };
+function todayStr(d = new Date()){
+  var p = function(n){ return (n < 10 ? "0" : "") + n; };
   return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear();
 }
 function billDateStr(){
   var el = document.getElementById("billDate");
   var v = el ? String(el.value || "").trim() : "";
-  return v || todayStr();
+  return v;
 }
 function initBillDate(force){
   var el = document.getElementById("billDate");
   if (!el) return;
-  if (force || !el.value) el.value = todayStr();
+  if (force || !el.value){ el.value = todayStr(); delete el.dataset.edited; }
 }
+document.getElementById("billDate").addEventListener("input", function(){ this.dataset.edited = "yes"; });
 
 /* =========================================================
    คีย์ลัด — ทำใบบิลได้โดยไม่ต้องแตะเมาส์
