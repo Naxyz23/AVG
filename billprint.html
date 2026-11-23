@@ -465,6 +465,7 @@ footer b{color:var(--bp-gold);}
   box-sizing:border-box; padding:0 2pt;
 }
 .pf.small{ font-size:10pt; }
+#depositOrigin .pf{ overflow:visible; }
 .pf.v-top{ align-items:flex-start; }
 .pf.v-bottom{ align-items:flex-end; }
 .pf.wrap-text{ white-space:normal; line-height:1.15; }
@@ -2561,18 +2562,15 @@ function prepareAccountSearch(block){
   block.activeCustomerSearch = null;
   var query = block.querySelector('.search-input').value.trim();
   var status = block.querySelector('.search-status');
-  var missing = 16 - query.length;
-  var valid = /^[0-9]{16}$/.test(query);
-  status.textContent = valid ? '' : /^[0-9]*$/.test(query) && missing > 0
-    ? 'ຍັງຂາດ ' + missing + ' ຕົວເລກ'
-    : 'ກະລຸນາໃສ່ເລກບັນຊີ 16 ຫຼັກ';
+  var valid = query.length > 0;
+  status.textContent = valid ? '' : 'ກະລຸນາໃສ່ເລກບັນຊີ ຫຼື ລະຫັດ';
   status.className = valid ? 'search-status' : 'search-status err';
   return valid;
 }
 
 document.querySelectorAll('.account-block .search-input').forEach(function(input){
-  input.inputMode = 'numeric';
-  input.placeholder = 'ເລກບັນຊີ 16 ຫຼັກ';
+  input.inputMode = 'text';
+  input.placeholder = 'ເລກບັນຊີ ຫຼື ລະຫັດ';
   input.addEventListener('input', function(){
     prepareAccountSearch(input.closest('.account-block'));
   });
@@ -2584,11 +2582,12 @@ function searchCustomer(btn){
   var search = {};
   block.activeCustomerSearch = search;
   var q = block.querySelector(".search-input").value.trim();
+  if (/^pl\d+$/i.test(q)) q = q.toUpperCase();
   var statusEl = block.querySelector(".search-status");
 
   if (DATA_MODE === "SUPABASE" && SUPABASE_URL && SUPABASE_ANON_KEY){
     statusEl.textContent = "⏳ ກຳລັງຄົ້ນຫາ..."; statusEl.className = "search-status";
-    var url = SUPABASE_URL + "/rest/v1/data123?select=*&contract=eq." + q + "&limit=1";
+    var url = SUPABASE_URL + "/rest/v1/data123?select=*&contract=eq." + encodeURIComponent(q) + "&limit=1";
     sbFetch(url)
       .then(function(r){
         if (!r.ok){
@@ -3422,32 +3421,10 @@ function buildDepositGrid(){
   }
 
   var origin = renderFieldsToOrigin('depositOrigin', positions, values);
-  var boxes = [];
-  origin.querySelectorAll('.pf').forEach(function(el){
-    var name = el.dataset.field;
-    var x = parseFloat(el.style.left);
-    var y = parseFloat(el.style.top);
-    var box = { name:name, x:x, y:y, right:x+positions[name].w, bottom:y+positions[name].h };
-    boxes.push(box);
-    if (name.startsWith('denom')){
-      el.classList.add('small');
-      el.dataset.denomidx = name.slice(5);
-    }
+  origin.querySelectorAll('.pf[data-field^="denom"]').forEach(function(el){
+    el.classList.add('small');
+    el.dataset.denomidx = el.dataset.field.slice(5);
   });
-
-  // Check saved per-field offsets as well as the base layout.
-  var overlapping = new Set();
-  boxes.forEach(function(a, i){
-    for (var j=i+1; j<boxes.length; j++){
-      var b = boxes[j];
-      if (Math.min(a.right, b.right)-Math.max(a.x, b.x) > 0.01 &&
-          Math.min(a.bottom, b.bottom)-Math.max(a.y, b.y) > 0.01){
-        overlapping.add(FIELD_LABELS[a.name] || a.name);
-        overlapping.add(FIELD_LABELS[b.name] || b.name);
-      }
-    }
-  });
-  origin.dataset.overlap = Array.from(overlapping).join(', ');
 }
 
 
@@ -3815,13 +3792,6 @@ function doPrint(type){
     if (el) el.style.display = "none";
   });
   buildActiveGrid(layout);
-  if (layout === 'deposit'){
-    var overlap = document.getElementById('depositOrigin').dataset.overlap;
-    if (overlap){
-      alert('ຕຳແໜ່ງພິມຊ້ອນກັນ: ' + overlap + '\nກະລຸນາປັບຕຳແໜ່ງພິມກ່ອນພິມ');
-      return;
-    }
-  }
   var pageId = PRINT_PAGE_IDS[layout] || 'printPage-deposit';
   document.getElementById(pageId).style.display = "block";
   setTimeout(function(){ window.print(); }, 30);
